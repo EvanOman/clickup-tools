@@ -259,7 +259,7 @@ def show_template(name: str = typer.Argument(..., help="Template name")):
                 template_type = "Custom"
             except Exception as e:
                 console.print(f"[red]Error loading template: {e}[/red]")
-                raise typer.Exit(1)
+                raise typer.Exit(1) from e
 
     if not template:
         console.print(f"[red]Template '{name}' not found[/red]")
@@ -305,7 +305,7 @@ def create_from_template(
                         template = json.load(f)
                 except Exception as e:
                     console.print(f"[red]Error loading template: {e}[/red]")
-                    raise typer.Exit(1)
+                    raise typer.Exit(1) from e
 
         if not template:
             console.print(f"[red]Template '{template_name}' not found[/red]")
@@ -321,7 +321,7 @@ def create_from_template(
                     variables = json.load(f)
             except Exception as e:
                 console.print(f"[red]Error loading variables file: {e}[/red]")
-                raise typer.Exit(1)
+                raise typer.Exit(1) from e
         elif interactive:
             # Interactive mode
             console.print(f"[bold]Creating task from template: {template_name}[/bold]")
@@ -358,10 +358,10 @@ def create_from_template(
 
         except ClickUpError as e:
             console.print(f"[red]ClickUp API Error: {e}[/red]")
-            raise typer.Exit(1)
+            raise typer.Exit(1) from e
         except Exception as e:
             console.print(f"[red]Error: {e}[/red]")
-            raise typer.Exit(1)
+            raise typer.Exit(1) from e
 
     run_async(_create_from_template())
 
@@ -420,7 +420,7 @@ def save_template(
                 for text in [template_name, template_desc]:
                     variables.update(re.findall(r"\{(\w+)\}", text))
 
-                template["variables"] = sorted(list(variables))
+                template["variables"] = sorted(variables)
 
                 # Save template
                 templates_dir = get_templates_dir()
@@ -435,9 +435,9 @@ def save_template(
 
         except ClickUpError as e:
             console.print(f"[red]ClickUp API Error: {e}[/red]")
-            raise typer.Exit(1)
+            raise typer.Exit(1) from e
         except Exception as e:
             console.print(f"[red]Error: {e}[/red]")
-            raise typer.Exit(1)
+            raise typer.Exit(1) from e
 
     run_async(_save_template())

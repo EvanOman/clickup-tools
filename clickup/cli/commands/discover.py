@@ -1,7 +1,6 @@
 """Discovery commands for navigating ClickUp hierarchy."""
 
 import asyncio
-from typing import Optional
 
 import typer
 from rich.console import Console
@@ -34,7 +33,7 @@ async def get_client() -> ClickUpClient:
 
 @app.command("hierarchy")
 def show_hierarchy(
-    workspace_id: Optional[str] = typer.Option(
+    workspace_id: str | None = typer.Option(
         None, "--workspace-id", "-w", help="Workspace ID (will list all if not provided)"
     ),
     max_depth: int = typer.Option(3, "--depth", "-d", help="Maximum depth to explore"),
@@ -49,7 +48,7 @@ def show_hierarchy(
                     TextColumn("[progress.description]{task.description}"),
                     console=console,
                 ) as progress:
-                    task_id = progress.add_task("Building hierarchy...", total=None)
+                    progress.add_task("Building hierarchy...", total=None)
 
                     tree = Tree("🏢 ClickUp Hierarchy")
 
@@ -113,16 +112,16 @@ def show_hierarchy(
 
         except ClickUpError as e:
             console.print(f"[red]ClickUp API Error: {e}[/red]")
-            raise typer.Exit(1)
+            raise typer.Exit(1) from e
 
     run_async(_show_hierarchy())
 
 
 @app.command("ids")
 def show_ids(
-    workspace_id: Optional[str] = typer.Option(None, "--workspace-id", "-w", help="Workspace ID"),
-    space_id: Optional[str] = typer.Option(None, "--space-id", "-s", help="Space ID"),
-    folder_id: Optional[str] = typer.Option(None, "--folder-id", "-f", help="Folder ID"),
+    workspace_id: str | None = typer.Option(None, "--workspace-id", "-w", help="Workspace ID"),
+    space_id: str | None = typer.Option(None, "--space-id", "-s", help="Space ID"),
+    folder_id: str | None = typer.Option(None, "--folder-id", "-f", help="Folder ID"),
 ):
     """Show IDs for easy copy-paste. Use --folder-id to get list IDs."""
 
@@ -209,7 +208,7 @@ def show_ids(
 
         except ClickUpError as e:
             console.print(f"[red]ClickUp API Error: {e}[/red]")
-            raise typer.Exit(1)
+            raise typer.Exit(1) from e
 
     run_async(_show_ids())
 
@@ -226,7 +225,7 @@ def find_path(list_id: str = typer.Argument(..., help="List ID to find path for"
                     TextColumn("[progress.description]{task.description}"),
                     console=console,
                 ) as progress:
-                    task_id = progress.add_task("Finding path...", total=None)
+                    progress.add_task("Finding path...", total=None)
 
                     # Get list details
                     lst = await client.get_list(list_id)
@@ -252,7 +251,7 @@ def find_path(list_id: str = typer.Argument(..., help="List ID to find path for"
                                 # Check folderless lists first
                                 try:
                                     folderless_lists = await client.get_folderless_lists(space.id)
-                                    if any(l.id == list_id for l in folderless_lists):
+                                    if any(lst.id == list_id for lst in folderless_lists):
                                         path_parts.insert(0, f"📁 [blue]{space.name}[/blue] ([dim]{space.id}[/dim])")
                                         path_parts.insert(
                                             0, f"🏢 [cyan]{workspace.name}[/cyan] ([dim]{workspace.id}[/dim])"
@@ -268,7 +267,7 @@ def find_path(list_id: str = typer.Argument(..., help="List ID to find path for"
                                     for folder in folders:
                                         try:
                                             lists = await client.get_lists(folder.id)
-                                            if any(l.id == list_id for l in lists):
+                                            if any(lst.id == list_id for lst in lists):
                                                 path_parts.insert(
                                                     0, f"📂 [yellow]{folder.name}[/yellow] ([dim]{folder.id}[/dim])"
                                                 )
@@ -297,6 +296,6 @@ def find_path(list_id: str = typer.Argument(..., help="List ID to find path for"
 
         except ClickUpError as e:
             console.print(f"[red]ClickUp API Error: {e}[/red]")
-            raise typer.Exit(1)
+            raise typer.Exit(1) from e
 
     run_async(_find_path())

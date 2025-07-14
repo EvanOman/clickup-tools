@@ -124,7 +124,7 @@ def export_tasks(
 
                     else:
                         console.print(f"[red]Unsupported format: {format}[/red]")
-                        raise typer.Exit(1)
+                        raise typer.Exit(1) from None
 
                     progress.update(task_id, description="✅ Export completed", completed=True)
 
@@ -132,10 +132,10 @@ def export_tasks(
 
         except ClickUpError as e:
             console.print(f"[red]ClickUp API Error: {e}[/red]")
-            raise typer.Exit(1)
+            raise typer.Exit(1) from e
         except Exception as e:
             console.print(f"[red]Error: {e}[/red]")
-            raise typer.Exit(1)
+            raise typer.Exit(1) from e
 
     run_async(_export_tasks())
 
@@ -220,7 +220,6 @@ def import_tasks(
                     # Process in batches
                     for i in range(0, len(tasks_data), batch_size):
                         batch = tasks_data[i : i + batch_size]
-                        batch_tasks = []
 
                         for task_data in batch:
                             try:
@@ -238,7 +237,7 @@ def import_tasks(
                                     create_data["due_date"] = task_data["due_date"]
 
                                 # Create task
-                                task = await client.create_task(list_id, **create_data)
+                                await client.create_task(list_id, **create_data)
                                 created_count += 1
 
                             except Exception as e:
@@ -255,10 +254,10 @@ def import_tasks(
 
         except ClickUpError as e:
             console.print(f"[red]ClickUp API Error: {e}[/red]")
-            raise typer.Exit(1)
+            raise typer.Exit(1) from e
         except Exception as e:
             console.print(f"[red]Error: {e}[/red]")
-            raise typer.Exit(1)
+            raise typer.Exit(1) from e
 
     run_async(_import_tasks())
 
@@ -362,9 +361,9 @@ def bulk_update(
 
         except ClickUpError as e:
             console.print(f"[red]ClickUp API Error: {e}[/red]")
-            raise typer.Exit(1)
+            raise typer.Exit(1) from e
         except Exception as e:
             console.print(f"[red]Error: {e}[/red]")
-            raise typer.Exit(1)
+            raise typer.Exit(1) from e
 
     run_async(_bulk_update())

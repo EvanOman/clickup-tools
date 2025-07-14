@@ -97,7 +97,7 @@ def list_tasks(
 
         except ClickUpError as e:
             console.print(f"[red]ClickUp API Error: {e}[/red]")
-            raise typer.Exit(1)
+            raise typer.Exit(1) from e
 
     run_async(_list_tasks())
 
@@ -139,7 +139,7 @@ def get_task(task_id: str = typer.Argument(..., help="Task ID")):
 
         except ClickUpError as e:
             console.print(f"[red]ClickUp API Error: {e}[/red]")
-            raise typer.Exit(1)
+            raise typer.Exit(1) from e
 
     run_async(_get_task())
 
@@ -192,7 +192,7 @@ def create_task(
 
         except ClickUpError as e:
             console.print(f"[red]ClickUp API Error: {e}[/red]")
-            raise typer.Exit(1)
+            raise typer.Exit(1) from e
 
     run_async(_create_task())
 
@@ -236,7 +236,7 @@ def update_task(
 
         except ClickUpError as e:
             console.print(f"[red]ClickUp API Error: {e}[/red]")
-            raise typer.Exit(1)
+            raise typer.Exit(1) from e
 
     run_async(_update_task())
 
@@ -268,6 +268,6 @@ def delete_task(
 
         except ClickUpError as e:
             console.print(f"[red]ClickUp API Error: {e}[/red]")
-            raise typer.Exit(1)
+            raise typer.Exit(1) from e
 
     run_async(_delete_task())

@@ -2,7 +2,7 @@
 
 import asyncio
 import json
-from typing import Any
+from typing import Any, Coroutine
 from urllib.parse import urljoin
 
 import httpx
@@ -37,11 +37,11 @@ class ClickUpClient:
         self.console = console or Console()
         self.client = httpx.AsyncClient(timeout=self.config.get("timeout", 30), headers=self.config.get_headers())
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> "ClickUpClient":
         """Async context manager entry."""
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         """Async context manager exit."""
         await self.client.aclose()
 
@@ -66,10 +66,10 @@ class ClickUpClient:
                 raise ServerError(f"Server error: {response.status_code}", response.status_code)
             else:
                 raise ClickUpError(f"Unexpected status code: {response.status_code}", response.status_code)
-        except json.JSONDecodeError:
-            raise ClickUpError(f"Invalid JSON response: {response.text}", response.status_code)
+        except json.JSONDecodeError as e:
+            raise ClickUpError(f"Invalid JSON response: {response.text}", response.status_code) from e
 
-    async def _request(self, method: str, endpoint: str, **kwargs) -> dict[str, Any]:
+    async def _request(self, method: str, endpoint: str, **kwargs: Any) -> dict[str, Any]:
         """Make HTTP request with retry logic."""
         base_url = self.config.get("base_url")
         # Ensure base_url ends with / and endpoint starts without /
@@ -93,7 +93,7 @@ class ClickUpClient:
                 if attempt < max_retries:
                     await asyncio.sleep(2**attempt)  # Exponential backoff
                     continue
-                raise NetworkError(f"Network error: {str(e)}")
+                raise NetworkError(f"Network error: {str(e)}") from e
 
         raise ClickUpError("Max retries exceeded")
 
@@ -146,14 +146,14 @@ class ClickUpClient:
         data = await self._request("GET", f"/list/{list_id}")
         return ClickUpList(**data)
 
-    async def create_list(self, folder_id: str, name: str, **kwargs) -> ClickUpList:
+    async def create_list(self, folder_id: str, name: str, **kwargs: Any) -> ClickUpList:
         """Create a new list."""
         payload = {"name": name, **kwargs}
         data = await self._request("POST", f"/folder/{folder_id}/list", json=payload)
         return ClickUpList(**data)
 
     # Tasks
-    async def get_tasks(self, list_id: str, **filters) -> list[Task]:
+    async def get_tasks(self, list_id: str, **filters: Any) -> list[Task]:
         """Get all tasks in a list."""
         params = {k: v for k, v in filters.items() if v is not None}
         data = await self._request("GET", f"/list/{list_id}/task", params=params)
@@ -164,13 +164,13 @@ class ClickUpClient:
         data = await self._request("GET", f"/task/{task_id}")
         return Task(**data)
 
-    async def create_task(self, list_id: str, name: str, **kwargs) -> Task:
+    async def create_task(self, list_id: str, name: str, **kwargs: Any) -> Task:
         """Create a new task."""
         payload = {"name": name, **kwargs}
         data = await self._request("POST", f"/list/{list_id}/task", json=payload)
         return Task(**data)
 
-    async def update_task(self, task_id: str, **updates) -> Task:
+    async def update_task(self, task_id: str, **updates: Any) -> Task:
         """Update a task."""
         data = await self._request("PUT", f"/task/{task_id}", json=updates)
         return Task(**data)
@@ -215,14 +215,14 @@ class ClickUpClient:
         data = await self._request("GET", f"/task/{task_id}/comment")
         return [Comment(**comment) for comment in data.get("comments", [])]
 
-    async def create_comment(self, task_id: str, comment_text: str, **kwargs) -> Comment:
+    async def create_comment(self, task_id: str, comment_text: str, **kwargs: Any) -> Comment:
         """Create a comment on a task."""
         payload = {"comment_text": comment_text, **kwargs}
         data = await self._request("POST", f"/task/{task_id}/comment", json=payload)
         return Comment(**data)
 
     # Search
-    async def search_tasks(self, team_id: str, query: str, **filters) -> list[Task]:
+    async def search_tasks(self, team_id: str, query: str, **filters: Any) -> list[Task]:
         """Search for tasks across the team."""
         params = {"query": query, **filters}
         data = await self._request("GET", f"/team/{team_id}/task", params=params)

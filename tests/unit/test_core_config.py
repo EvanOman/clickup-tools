@@ -1,8 +1,7 @@
 """Tests for configuration management."""
 
+
 import pytest
-import json
-from pathlib import Path
 
 from clickup.core import Config
 

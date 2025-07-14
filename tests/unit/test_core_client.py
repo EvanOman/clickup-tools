@@ -1,13 +1,14 @@
 """Tests for ClickUp API client."""
 
-import pytest
-from unittest.mock import Mock, AsyncMock, patch
+from unittest.mock import Mock
+
 import httpx
+import pytest
 
 from clickup.core import (
+    AuthenticationError,
     ClickUpClient,
     ClickUpError,
-    AuthenticationError,
     NotFoundError,
     RateLimitError,
     ValidationError,

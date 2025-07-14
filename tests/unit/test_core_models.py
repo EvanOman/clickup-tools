@@ -1,9 +1,10 @@
 """Tests for data models."""
 
-import pytest
-from datetime import datetime
 
-from clickup.core.models import Task, Team, Space, List as ClickUpList, User, CustomField
+import pytest
+
+from clickup.core.models import CustomField, Space, Task, Team, User
+from clickup.core.models import List as ClickUpList
 
 
 def test_task_model():

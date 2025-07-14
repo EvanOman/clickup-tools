@@ -74,7 +74,7 @@ def list_lists(folder_id: str | None = typer.Option(None, "--folder-id", "-f", h
 
         except ClickUpError as e:
             console.print(f"[red]ClickUp API Error: {e}[/red]")
-            raise typer.Exit(1)
+            raise typer.Exit(1) from e
 
     run_async(_list_lists())
 
@@ -121,7 +121,7 @@ def get_list(list_id: str = typer.Argument(..., help="List ID")):
 
         except ClickUpError as e:
             console.print(f"[red]ClickUp API Error: {e}[/red]")
-            raise typer.Exit(1)
+            raise typer.Exit(1) from e
 
     run_async(_get_list())
 
@@ -163,6 +163,6 @@ def create_list(
 
         except ClickUpError as e:
             console.print(f"[red]ClickUp API Error: {e}[/red]")
-            raise typer.Exit(1)
+            raise typer.Exit(1) from e
 
     run_async(_create_list())

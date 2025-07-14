@@ -6,7 +6,7 @@ from typing import Any
 class ClickUpError(Exception):
     """Base exception for ClickUp API errors."""
 
-    def __init__(self, message: str, status_code: int | None = None, response_data: dict[str, Any] | None = None):
+    def __init__(self, message: str, status_code: int | None = None, response_data: dict[str, Any] | None = None) -> None:
         super().__init__(message)
         self.status_code = status_code
         self.response_data = response_data or {}
@@ -39,7 +39,7 @@ class ValidationError(ClickUpError):
 class RateLimitError(ClickUpError):
     """API rate limit exceeded."""
 
-    def __init__(self, message: str, retry_after: int | None = None, **kwargs):
+    def __init__(self, message: str, retry_after: int | None = None, **kwargs: Any) -> None:
         super().__init__(message, **kwargs)
         self.retry_after = retry_after
 

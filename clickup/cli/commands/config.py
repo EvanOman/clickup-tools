@@ -1,11 +1,12 @@
 """Configuration management commands."""
 
 import asyncio
+
 import typer
 from rich.console import Console
 from rich.table import Table
 
-from ...core import Config, ClickUpClient
+from ...core import ClickUpClient, Config
 
 app = typer.Typer(help="Configuration management")
 console = Console()
@@ -39,7 +40,7 @@ def set_config(
         console.print(f"✅ Set {key} = {value}")
     except ValueError as e:
         console.print(f"[red]Error: {e}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
 
 @app.command("get")
@@ -117,6 +118,6 @@ def validate_auth():
 
         except Exception as e:
             console.print(f"[red]❌ Error validating credentials: {str(e)}[/red]")
-            raise typer.Exit(1)
+            raise typer.Exit(1) from e
 
     asyncio.run(_validate())

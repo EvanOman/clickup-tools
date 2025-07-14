@@ -1,13 +1,11 @@
 """Integration tests for CLI commands."""
 
-import pytest
-from unittest.mock import Mock, AsyncMock, patch
-from typer.testing import CliRunner
 import tempfile
-from pathlib import Path
+from unittest.mock import AsyncMock, Mock, patch
+
+from typer.testing import CliRunner
 
 from clickup.cli.main import app
-
 
 runner = CliRunner()
 

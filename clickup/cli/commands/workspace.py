@@ -26,7 +26,7 @@ async def get_client() -> ClickUpClient:
             "[red]Error: No client credentials configured. Set CLICKUP_CLIENT_ID and "
             "CLICKUP_CLIENT_SECRET environment variables.[/red]"
         )
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
     return ClickUpClient(config, console)
 
 
@@ -62,7 +62,7 @@ def list_workspaces():
 
         except ClickUpError as e:
             console.print(f"[red]ClickUp API Error: {e}[/red]")
-            raise typer.Exit(1)
+            raise typer.Exit(1) from None
 
     run_async(_list_workspaces())
 
@@ -78,7 +78,7 @@ def list_spaces(workspace_id: str | None = typer.Option(None, "--workspace-id", 
         if not workspace_id_to_use:
             console.print("[red]Error: No workspace ID provided and no default workspace configured.[/red]")
             console.print("Use --workspace-id or set a default with 'clickup config set default_team_id <id>'")
-            raise typer.Exit(1)
+            raise typer.Exit(1) from None
 
         try:
             async with await get_client() as client:
@@ -107,7 +107,7 @@ def list_spaces(workspace_id: str | None = typer.Option(None, "--workspace-id", 
 
         except ClickUpError as e:
             console.print(f"[red]ClickUp API Error: {e}[/red]")
-            raise typer.Exit(1)
+            raise typer.Exit(1) from None
 
     run_async(_list_spaces())
 
@@ -123,7 +123,7 @@ def list_folders(space_id: str | None = typer.Option(None, "--space-id", "-s", h
         if not space_id_to_use:
             console.print("[red]Error: No space ID provided and no default space configured.[/red]")
             console.print("Use --space-id or set a default with 'clickup config set default_space_id <id>'")
-            raise typer.Exit(1)
+            raise typer.Exit(1) from None
 
         try:
             async with await get_client() as client:
@@ -152,7 +152,7 @@ def list_folders(space_id: str | None = typer.Option(None, "--space-id", "-s", h
 
         except ClickUpError as e:
             console.print(f"[red]ClickUp API Error: {e}[/red]")
-            raise typer.Exit(1)
+            raise typer.Exit(1) from None
 
     run_async(_list_folders())
 
@@ -168,7 +168,7 @@ def list_members(workspace_id: str | None = typer.Option(None, "--workspace-id",
         if not workspace_id_to_use:
             console.print("[red]Error: No workspace ID provided and no default workspace configured.[/red]")
             console.print("Use --workspace-id or set a default with 'clickup config set default_team_id <id>'")
-            raise typer.Exit(1)
+            raise typer.Exit(1) from None
 
         try:
             async with await get_client() as client:
@@ -197,6 +197,6 @@ def list_members(workspace_id: str | None = typer.Option(None, "--workspace-id",
 
         except ClickUpError as e:
             console.print(f"[red]ClickUp API Error: {e}[/red]")
-            raise typer.Exit(1)
+            raise typer.Exit(1) from None
 
     run_async(_list_members())

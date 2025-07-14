@@ -1,12 +1,13 @@
 """Pytest configuration and shared fixtures."""
 
-import pytest
-from unittest.mock import Mock, AsyncMock
-from pathlib import Path
 import tempfile
-import json
+from pathlib import Path
+from unittest.mock import AsyncMock, Mock
 
-from clickup.core import Config, ClickUpClient, Task, Team, Space, User, List as ClickUpList
+import pytest
+
+from clickup.core import ClickUpClient, Config, Space, Task, Team, User
+from clickup.core import List as ClickUpList
 
 
 @pytest.fixture

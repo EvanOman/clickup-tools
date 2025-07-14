@@ -228,7 +228,7 @@ async def handle_call_tool(name: str, arguments: dict[str, Any] | None) -> list[
                 return [TextContent(type="text", text=f"🗑️ Deleted task {arguments['task_id']}")]
 
             elif name == "create_comment":
-                comment = await client.create_comment(arguments["task_id"], arguments["comment"])
+                await client.create_comment(arguments["task_id"], arguments["comment"])
                 return [TextContent(type="text", text=f"💬 Added comment to task {arguments['task_id']}")]
 
             else:
@@ -402,7 +402,7 @@ async def handle_get_prompt(name: str, arguments: dict[str, str] | None) -> Prom
 
 Please use the search_tasks tool to find:
 1. Tasks completed yesterday
-2. Tasks in progress today  
+2. Tasks in progress today
 3. Any blocked or overdue tasks
 
 """
@@ -412,7 +412,7 @@ Please use the search_tasks tool to find:
         prompt_text += """
 Format the output as:
 - ✅ **Completed Yesterday**: [list tasks]
-- 🔄 **In Progress Today**: [list tasks]  
+- 🔄 **In Progress Today**: [list tasks]
 - ⚠️ **Blocked/Issues**: [list any problems]
 - 📋 **Planned for Today**: [list upcoming tasks]
 """
@@ -480,11 +480,11 @@ Use the create_task tool with this structured template:
 ## ✅ Expected Behavior
 [What should have happened]
 
-## ❌ Actual Behavior  
+## ❌ Actual Behavior
 [What actually happened]
 
 ## 🌐 Environment
-- Browser/OS: 
+- Browser/OS:
 - Version:
 - Device:
 

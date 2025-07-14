@@ -1,8 +1,9 @@
 """Integration tests for MCP server."""
 
-import pytest
 import json
-from unittest.mock import Mock, AsyncMock, patch
+from unittest.mock import AsyncMock, patch
+
+import pytest
 
 from clickup.mcp.server import ClickUpMCPServer
 

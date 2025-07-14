@@ -1,11 +1,12 @@
 """Main CLI application entry point."""
 
 import asyncio
+
 import typer
 from rich.console import Console
 from rich.table import Table
 
-from ..core import Config, ClickUpClient
+from ..core import ClickUpClient, Config
 from .commands import bulk, config, discover, task, templates, workspace
 from .commands import list as list_cmd
 
@@ -109,10 +110,10 @@ def main():
         app()
     except KeyboardInterrupt:
         console.print("\n[yellow]Cancelled by user[/yellow]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
     except Exception as e:
         console.print(f"[red]Error: {e}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
 
 if __name__ == "__main__":
