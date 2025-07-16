@@ -2,7 +2,7 @@
 
 import asyncio
 import json
-from typing import Any, Coroutine
+from typing import Any
 from urllib.parse import urljoin
 
 import httpx

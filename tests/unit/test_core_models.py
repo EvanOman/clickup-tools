@@ -1,6 +1,5 @@
 """Tests for data models."""
 
-
 import pytest
 
 from clickup.core.models import CustomField, Space, Task, Team, User
