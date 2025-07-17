@@ -1,7 +1,5 @@
 """Discovery commands for navigating ClickUp hierarchy."""
 
-import asyncio
-
 import typer
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
@@ -9,14 +7,10 @@ from rich.table import Table
 from rich.tree import Tree
 
 from ...core import ClickUpClient, ClickUpError, Config
+from ..utils import run_async
 
 app = typer.Typer(help="Discover and navigate ClickUp hierarchy")
 console = Console()
-
-
-def run_async(coro):
-    """Helper to run async functions in sync context."""
-    return asyncio.run(coro)
 
 
 async def get_client() -> ClickUpClient:
@@ -36,6 +30,7 @@ def show_hierarchy(
     workspace_id: str | None = typer.Option(
         None, "--workspace-id", "-w", help="Workspace ID (will list all if not provided)"
     ),
+    team_id: str | None = typer.Option(None, "--team-id", "-t", help="Team ID (alias for workspace-id)"),
     max_depth: int = typer.Option(3, "--depth", "-d", help="Maximum depth to explore"),
 ):
     """Show the complete ClickUp hierarchy tree."""
@@ -52,8 +47,11 @@ def show_hierarchy(
 
                     tree = Tree("🏢 ClickUp Hierarchy")
 
-                    if workspace_id:
-                        workspaces = [await client.get_team(workspace_id)]
+                    # Use either workspace_id or team_id (they're the same thing)
+                    id_to_use = workspace_id or team_id
+
+                    if id_to_use:
+                        workspaces = [await client.get_team(id_to_use)]
                     else:
                         workspaces = await client.get_teams()
 
@@ -120,6 +118,7 @@ def show_hierarchy(
 @app.command("ids")
 def show_ids(
     workspace_id: str | None = typer.Option(None, "--workspace-id", "-w", help="Workspace ID"),
+    team_id: str | None = typer.Option(None, "--team-id", "-t", help="Team ID (alias for workspace-id)"),
     space_id: str | None = typer.Option(None, "--space-id", "-s", help="Space ID"),
     folder_id: str | None = typer.Option(None, "--folder-id", "-f", help="Folder ID"),
 ):
@@ -167,11 +166,12 @@ def show_ids(
 
                     console.print(table)
 
-                elif workspace_id:
+                elif workspace_id or team_id:
                     # Show spaces in workspace
-                    spaces = await client.get_spaces(workspace_id)
+                    id_to_use = workspace_id or team_id
+                    spaces = await client.get_spaces(id_to_use)
                     if spaces:
-                        table = Table(title=f"Spaces in Workspace {workspace_id}")
+                        table = Table(title=f"Spaces in Workspace {id_to_use}")
                         table.add_column("Name", style="blue")
                         table.add_column("ID", style="cyan")
                         table.add_column("Private", style="yellow")

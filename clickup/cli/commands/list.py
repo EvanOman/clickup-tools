@@ -1,21 +1,15 @@
 """List management commands."""
 
-import asyncio
-
 import typer
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 
 from ...core import ClickUpClient, ClickUpError, Config
+from ..utils import run_async
 
 app = typer.Typer(help="List management")
 console = Console()
-
-
-def run_async(coro):
-    """Helper to run async functions in sync context."""
-    return asyncio.run(coro)
 
 
 async def get_client() -> ClickUpClient:
@@ -31,13 +25,16 @@ async def get_client() -> ClickUpClient:
 
 
 @app.command("show")
-def list_lists(folder_id: str | None = typer.Option(None, "--folder-id", "-f", help="Folder ID")):
-    """List all lists in a folder."""
+def list_lists(
+    folder_id: str | None = typer.Option(None, "--folder-id", "-f", help="Folder ID"),
+    space_id: str | None = typer.Option(None, "--space-id", "-s", help="Space ID (for folderless lists)"),
+):
+    """List all lists in a folder or space."""
 
     async def _list_lists():
-        if not folder_id:
-            console.print("[red]Error: Folder ID is required.[/red]")
-            console.print("Use --folder-id to specify the folder")
+        if not folder_id and not space_id:
+            console.print("[red]Error: Either folder ID or space ID is required.[/red]")
+            console.print("Use --folder-id for lists in a folder or --space-id for folderless lists")
             raise typer.Exit(1)
 
         try:
@@ -48,7 +45,10 @@ def list_lists(folder_id: str | None = typer.Option(None, "--folder-id", "-f", h
                     console=console,
                 ) as progress:
                     progress.add_task("Fetching lists...", total=None)
-                    lists = await client.get_lists(folder_id)
+                    if folder_id:
+                        lists = await client.get_lists(folder_id)
+                    else:
+                        lists = await client.get_folderless_lists(space_id)
 
                 if not lists:
                     console.print("[yellow]No lists found.[/yellow]")
@@ -80,10 +80,18 @@ def list_lists(folder_id: str | None = typer.Option(None, "--folder-id", "-f", h
 
 
 @app.command("get")
-def get_list(list_id: str = typer.Argument(..., help="List ID")):
+def get_list(list_id: str | None = typer.Option(None, "--list-id", "-l", help="List ID")):
     """Get detailed information about a specific list."""
 
     async def _get_list():
+        config = Config()
+        list_id_to_use = list_id or config.get("default_list_id")
+
+        if not list_id_to_use:
+            console.print("[red]Error: No list ID provided and no default list configured.[/red]")
+            console.print("Use --list-id or set a default with 'clickup config set default_list_id <id>'")
+            raise typer.Exit(1)
+
         try:
             async with await get_client() as client:
                 with Progress(
@@ -92,7 +100,7 @@ def get_list(list_id: str = typer.Argument(..., help="List ID")):
                     console=console,
                 ) as progress:
                     progress.add_task("Fetching list...", total=None)
-                    list_item = await client.get_list(list_id)
+                    list_item = await client.get_list(list_id_to_use)
 
                 # Create detailed list info table
                 table = Table(title=f"List: {list_item.name}", show_header=False)
@@ -129,7 +137,8 @@ def get_list(list_id: str = typer.Argument(..., help="List ID")):
 @app.command("create")
 def create_list(
     name: str = typer.Argument(..., help="List name"),
-    folder_id: str = typer.Option(..., "--folder-id", "-f", help="Folder ID to create list in"),
+    folder_id: str | None = typer.Option(None, "--folder-id", "-f", help="Folder ID to create list in"),
+    space_id: str | None = typer.Option(None, "--space-id", "-s", help="Space ID to create folderless list in"),
     content: str | None = typer.Option(None, "--content", "-c", help="List description/content"),
     due_date: str | None = typer.Option(None, "--due-date", help="Due date (YYYY-MM-DD)"),
     priority: int | None = typer.Option(None, "--priority", help="Priority (1-4)"),
@@ -138,6 +147,11 @@ def create_list(
     """Create a new list."""
 
     async def _create_list():
+        if not folder_id and not space_id:
+            console.print("[red]Error: Either folder ID or space ID is required.[/red]")
+            console.print("Use --folder-id to create list in a folder or --space-id for folderless list")
+            raise typer.Exit(1)
+
         try:
             list_data = {"name": name}
 
@@ -157,7 +171,10 @@ def create_list(
                     console=console,
                 ) as progress:
                     progress.add_task("Creating list...", total=None)
-                    list_item = await client.create_list(folder_id, **list_data)
+                    if folder_id:
+                        list_item = await client.create_list(folder_id, **list_data)
+                    else:
+                        list_item = await client.create_folderless_list(space_id, **list_data)
 
                 console.print(f"✅ Created list: {list_item.name} (ID: {list_item.id})")
 

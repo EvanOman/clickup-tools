@@ -51,3 +51,11 @@ clickup-toolkit/
 7. Use mypy for strict type checking
 
 This ensures all agents working on this project use the same Python-based toolchain.
+
+## PRD
+
+- The app and its features are described in the PRD
+- Each PRD item should be marked with the following labels:
+    - [INCOMPLETE]
+    - [COMPLETE_UNTESTED]
+    - [COMPLETE_TESTED]

@@ -71,7 +71,7 @@ def test_config_invalid_key():
             assert "Error" in result.stdout
 
 
-@patch("clickup_toolkit_cli.commands.task.get_client")
+@patch("clickup.cli.commands.task.get_client")
 def test_task_list_no_token(mock_get_client):
     """Test task list command without API token."""
     mock_get_client.side_effect = Exception("No API token configured")
@@ -80,7 +80,7 @@ def test_task_list_no_token(mock_get_client):
     assert result.exit_code == 1
 
 
-@patch("clickup_toolkit_cli.commands.task.get_client")
+@patch("clickup.cli.commands.task.get_client")
 async def test_task_create_success(mock_get_client):
     """Test successful task creation."""
     # Mock the async client
@@ -127,7 +127,7 @@ def test_template_show_nonexistent():
     assert "not found" in result.stdout
 
 
-@patch("clickup_toolkit_cli.commands.workspace.get_client")
+@patch("clickup.cli.commands.workspace.get_client")
 async def test_workspace_list(mock_get_client):
     """Test listing workspaces."""
     mock_client = AsyncMock()

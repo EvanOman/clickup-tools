@@ -1,21 +1,15 @@
 """Workspace management commands."""
 
-import asyncio
-
 import typer
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 
 from ...core import ClickUpClient, ClickUpError, Config
+from ..utils import run_async
 
 app = typer.Typer(help="Workspace management")
 console = Console()
-
-
-def run_async(coro):
-    """Helper to run async functions in sync context."""
-    return asyncio.run(coro)
 
 
 async def get_client() -> ClickUpClient:
@@ -63,17 +57,24 @@ def list_workspaces():
         except ClickUpError as e:
             console.print(f"[red]ClickUp API Error: {e}[/red]")
             raise typer.Exit(1) from None
+        except Exception as e:
+            console.print(f"[red]An unexpected error occurred: {e}[/red]")
+            raise typer.Exit(1) from e
 
     run_async(_list_workspaces())
 
 
 @app.command("spaces")
-def list_spaces(workspace_id: str | None = typer.Option(None, "--workspace-id", "-w", help="Workspace ID")):
+def list_spaces(
+    workspace_id: str | None = typer.Option(None, "--workspace-id", "-w", help="Workspace ID"),
+    team_id: str | None = typer.Option(None, "--team-id", "-t", help="Team ID (alias for workspace-id)"),
+    show_private: bool = typer.Option(False, "--show-private", help="Show privacy information"),
+):
     """List spaces in a workspace."""
 
     async def _list_spaces():
         config = Config()
-        workspace_id_to_use = workspace_id or config.get("default_team_id")
+        workspace_id_to_use = workspace_id or team_id or config.get("default_team_id")
 
         if not workspace_id_to_use:
             console.print("[red]Error: No workspace ID provided and no default workspace configured.[/red]")
@@ -108,12 +109,18 @@ def list_spaces(workspace_id: str | None = typer.Option(None, "--workspace-id", 
         except ClickUpError as e:
             console.print(f"[red]ClickUp API Error: {e}[/red]")
             raise typer.Exit(1) from None
+        except Exception as e:
+            console.print(f"[red]An unexpected error occurred: {e}[/red]")
+            raise typer.Exit(1) from e
 
     run_async(_list_spaces())
 
 
 @app.command("folders")
-def list_folders(space_id: str | None = typer.Option(None, "--space-id", "-s", help="Space ID")):
+def list_folders(
+    space_id: str | None = typer.Option(None, "--space-id", "-s", help="Space ID"),
+    show_counts: bool = typer.Option(False, "--show-counts", help="Show task count information"),
+):
     """List folders in a space."""
 
     async def _list_folders():
@@ -153,17 +160,24 @@ def list_folders(space_id: str | None = typer.Option(None, "--space-id", "-s", h
         except ClickUpError as e:
             console.print(f"[red]ClickUp API Error: {e}[/red]")
             raise typer.Exit(1) from None
+        except Exception as e:
+            console.print(f"[red]An unexpected error occurred: {e}[/red]")
+            raise typer.Exit(1) from e
 
     run_async(_list_folders())
 
 
 @app.command("members")
-def list_members(workspace_id: str | None = typer.Option(None, "--workspace-id", "-w", help="Workspace ID")):
+def list_members(
+    workspace_id: str | None = typer.Option(None, "--workspace-id", "-w", help="Workspace ID"),
+    team_id: str | None = typer.Option(None, "--team-id", "-t", help="Team ID (alias for workspace-id)"),
+    role: str | None = typer.Option(None, "--role", help="Filter by role"),
+):
     """List members in a workspace."""
 
     async def _list_members():
         config = Config()
-        workspace_id_to_use = workspace_id or config.get("default_team_id")
+        workspace_id_to_use = workspace_id or team_id or config.get("default_team_id")
 
         if not workspace_id_to_use:
             console.print("[red]Error: No workspace ID provided and no default workspace configured.[/red]")
@@ -188,15 +202,25 @@ def list_members(workspace_id: str | None = typer.Option(None, "--workspace-id",
                 table.add_column("ID", style="cyan")
                 table.add_column("Username", style="bold")
                 table.add_column("Email", style="green")
+                table.add_column("Role", style="magenta")
                 table.add_column("Color", style="yellow")
 
                 for member in members:
-                    table.add_row(str(member.id), member.username, member.email, member.color or "None")
+                    table.add_row(
+                        str(member.id),
+                        member.username,
+                        member.email,
+                        member.role or "None",
+                        member.color or "None",
+                    )
 
                 console.print(table)
 
         except ClickUpError as e:
             console.print(f"[red]ClickUp API Error: {e}[/red]")
             raise typer.Exit(1) from None
+        except Exception as e:
+            console.print(f"[red]An unexpected error occurred: {e}[/red]")
+            raise typer.Exit(1) from e
 
     run_async(_list_members())

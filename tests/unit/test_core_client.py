@@ -1,6 +1,6 @@
 """Tests for ClickUp API client."""
 
-from unittest.mock import Mock
+from unittest.mock import AsyncMock, Mock, patch
 
 import httpx
 import pytest
@@ -87,6 +87,9 @@ async def test_rate_limit_error(mock_clickup_client):
     mock_response.content = b"Rate limited"
 
     mock_clickup_client.client.request.return_value = mock_response
+
+    # Set max_retries to 0 to avoid sleeping during the test
+    mock_clickup_client.config.set("max_retries", 0)
 
     with pytest.raises(RateLimitError) as exc_info:
         await mock_clickup_client._request("GET", "/test")
@@ -185,7 +188,8 @@ async def test_get_teams(mock_clickup_client, sample_team):
 
 
 @pytest.mark.asyncio
-async def test_network_error_retry(mock_clickup_client):
+@patch("asyncio.sleep", new_callable=AsyncMock)
+async def test_network_error_retry(mock_sleep, mock_clickup_client):
     """Test network error retry logic."""
     # First call fails, second succeeds
     mock_clickup_client.client.request.side_effect = [
@@ -196,10 +200,13 @@ async def test_network_error_retry(mock_clickup_client):
     result = await mock_clickup_client._request("GET", "/test")
     assert result["success"] is True
     assert mock_clickup_client.client.request.call_count == 2
+    # Verify sleep was called with exponential backoff (2^0 = 1)
+    mock_sleep.assert_called_once_with(1)
 
 
 @pytest.mark.asyncio
-async def test_max_retries_exceeded(mock_clickup_client):
+@patch("asyncio.sleep", new_callable=AsyncMock)
+async def test_max_retries_exceeded(mock_sleep, mock_clickup_client):
     """Test max retries exceeded."""
     mock_clickup_client.client.request.side_effect = httpx.ConnectError("Connection failed")
 
@@ -208,6 +215,11 @@ async def test_max_retries_exceeded(mock_clickup_client):
 
     # Should retry max_retries + 1 times
     assert mock_clickup_client.client.request.call_count == 4  # 3 retries + 1 initial
+    # Verify exponential backoff: 2^0, 2^1, 2^2 = 1, 2, 4
+    assert mock_sleep.call_count == 3
+    mock_sleep.assert_any_call(1)  # 2^0
+    mock_sleep.assert_any_call(2)  # 2^1
+    mock_sleep.assert_any_call(4)  # 2^2
 
 
 @pytest.mark.asyncio
@@ -253,7 +265,8 @@ async def test_validate_auth_invalid_token(mock_clickup_client):
 
 
 @pytest.mark.asyncio
-async def test_validate_auth_network_error(mock_clickup_client):
+@patch("asyncio.sleep", new_callable=AsyncMock)
+async def test_validate_auth_network_error(mock_sleep, mock_clickup_client):
     """Test auth validation with network error."""
     mock_clickup_client.client.request.side_effect = httpx.ConnectError("Connection failed")
 
