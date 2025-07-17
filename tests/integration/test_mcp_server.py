@@ -9,9 +9,21 @@ from clickup.mcp.server import ClickUpMCPServer
 
 
 @pytest.fixture
-def mcp_server():
+def mcp_server(tmp_path, monkeypatch):
     """Create MCP server instance for testing."""
-    return ClickUpMCPServer()
+    # Clear environment variables
+    monkeypatch.delenv("CLICKUP_API_TOKEN", raising=False)
+    monkeypatch.delenv("CLICKUP_API_KEY", raising=False)
+    monkeypatch.delenv("CLICKUP_CLIENT_ID", raising=False)
+    monkeypatch.delenv("CLICKUP_CLIENT_SECRET", raising=False)
+
+    # Use a temporary config path to avoid picking up user config
+    config_path = tmp_path / "config.json"
+    from clickup.core.config import Config
+
+    server = ClickUpMCPServer()
+    server.config = Config(config_path=config_path)
+    return server
 
 
 @pytest.mark.asyncio
@@ -29,7 +41,7 @@ async def test_get_client_no_token(mcp_server):
 
 
 @pytest.mark.asyncio
-@patch("clickup_toolkit_mcp.server.ClickUpClient")
+@patch("clickup.mcp.server.ClickUpClient")
 async def test_get_client_with_token(mock_client_class, mcp_server):
     """Test getting client with API token."""
     mcp_server.config.set_api_token("test_token")
@@ -62,13 +74,13 @@ async def test_list_resources():
     from clickup.mcp.server import handle_list_resources
 
     resources = await handle_list_resources()
-    resource_uris = [resource.uri for resource in resources]
+    resource_uris = [str(resource.uri) for resource in resources]
 
     assert "clickup://workspaces" in resource_uris
-    assert "clickup://spaces/{workspace_id}" in resource_uris
-    assert "clickup://folders/{space_id}" in resource_uris
-    assert "clickup://lists/{folder_id}" in resource_uris
-    assert "clickup://members/{workspace_id}" in resource_uris
+    assert "clickup://spaces/%7Bworkspace_id%7D" in resource_uris
+    assert "clickup://folders/%7Bspace_id%7D" in resource_uris
+    assert "clickup://lists/%7Bfolder_id%7D" in resource_uris
+    assert "clickup://members/%7Bworkspace_id%7D" in resource_uris
 
 
 @pytest.mark.asyncio

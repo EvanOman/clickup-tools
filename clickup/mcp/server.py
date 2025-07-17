@@ -3,6 +3,7 @@
 import asyncio
 import json
 import logging
+from dataclasses import dataclass
 from typing import Any
 
 from mcp.server import NotificationOptions, Server
@@ -12,7 +13,6 @@ from mcp.types import (
     PromptArgument,
     PromptMessage,
     Resource,
-    Role,
     TextContent,
     Tool,
 )
@@ -25,10 +25,20 @@ logger = logging.getLogger(__name__)
 server = Server("clickup-toolkit-mcp")
 
 
+@dataclass
+class MCPResult:
+    """Result object for MCP operations."""
+
+    is_error: bool
+    content: list[TextContent]
+
+
 class ClickUpMCPServer:
     """ClickUp MCP Server for AI tool integration."""
 
     def __init__(self):
+        self.name = "clickup-mcp-server"
+        self.version = "1.0.0"
         self.config = Config()
         self.client: ClickUpClient | None = None
 
@@ -36,9 +46,176 @@ class ClickUpMCPServer:
         """Get or create ClickUp client."""
         if self.client is None:
             if not self.config.has_credentials():
-                raise ClickUpError("ClickUp client ID and secret not configured")
+                raise ClickUpError("ClickUp API token not configured")
             self.client = ClickUpClient(self.config)
         return self.client
+
+    async def _get_client(self) -> ClickUpClient:
+        """Alias for get_client (for test compatibility)."""
+        if not self.config.has_credentials():
+            raise ClickUpError("ClickUp API credentials not configured")
+        return await self.get_client()
+
+    async def create_task(self, name: str, list_id: str, **kwargs) -> MCPResult:
+        """Create a new task."""
+        try:
+            client = await self._get_client()
+            task = await client.create_task(list_id, name=name, **kwargs)
+            return MCPResult(
+                is_error=False,
+                content=[
+                    TextContent(
+                        type="text", text=f"✅ Created task: {task.name}\nID: {task.id}\nURL: {task.url or 'N/A'}"
+                    )
+                ],
+            )
+        except ClickUpError as e:
+            return MCPResult(is_error=True, content=[TextContent(type="text", text=f"❌ ClickUp API Error: {str(e)}")])
+        except Exception as e:
+            logger.exception("Error creating task")
+            return MCPResult(is_error=True, content=[TextContent(type="text", text=f"❌ Error: {str(e)}")])
+
+    async def update_task(self, task_id: str, **kwargs) -> MCPResult:
+        """Update an existing task."""
+        try:
+            client = await self._get_client()
+            task = await client.update_task(task_id, **kwargs)
+            return MCPResult(
+                is_error=False, content=[TextContent(type="text", text=f"✅ Updated task: {task.name}\nID: {task.id}")]
+            )
+        except ClickUpError as e:
+            return MCPResult(is_error=True, content=[TextContent(type="text", text=f"❌ ClickUp API Error: {str(e)}")])
+        except Exception as e:
+            logger.exception("Error updating task")
+            return MCPResult(is_error=True, content=[TextContent(type="text", text=f"❌ Error: {str(e)}")])
+
+    async def get_tasks(self, list_id: str, **kwargs) -> MCPResult:
+        """Get tasks from a list."""
+        try:
+            client = await self._get_client()
+            tasks = await client.get_tasks(list_id, **kwargs)
+            limit = kwargs.get("limit", 50)
+            tasks = tasks[:limit]
+
+            if not tasks:
+                return MCPResult(is_error=False, content=[TextContent(type="text", text="📝 No tasks found")])
+
+            task_list = []
+            for task in tasks:
+                status = task.status.get("status", "Unknown") if task.status else "Unknown"
+                assignees = ", ".join([a.username for a in task.assignees]) if task.assignees else "Unassigned"
+                task_list.append(f"• {task.name} (ID: {task.id}) - {status} - {assignees}")
+
+            return MCPResult(
+                is_error=False,
+                content=[TextContent(type="text", text=f"📝 Found {len(tasks)} tasks:\n\n" + "\n".join(task_list))],
+            )
+        except ClickUpError as e:
+            return MCPResult(is_error=True, content=[TextContent(type="text", text=f"❌ ClickUp API Error: {str(e)}")])
+        except Exception as e:
+            logger.exception("Error getting tasks")
+            return MCPResult(is_error=True, content=[TextContent(type="text", text=f"❌ Error: {str(e)}")])
+
+    async def search_tasks(self, workspace_id: str, query: str, **kwargs) -> MCPResult:
+        """Search for tasks."""
+        try:
+            client = await self._get_client()
+            tasks = await client.search_tasks(workspace_id, query)
+            limit = kwargs.get("limit", 50)
+            tasks = tasks[:limit]
+
+            if not tasks:
+                return MCPResult(
+                    is_error=False, content=[TextContent(type="text", text=f"🔍 No tasks found for query: {query}")]
+                )
+
+            task_list = []
+            for task in tasks:
+                status = task.status.get("status", "Unknown") if task.status else "Unknown"
+                task_list.append(f"• {task.name} (ID: {task.id}) - {status}")
+
+            return MCPResult(
+                is_error=False,
+                content=[
+                    TextContent(
+                        type="text",
+                        text=f"🔍 Found {len(tasks)} tasks for '{query}':\n\n" + "\n".join(task_list),
+                    )
+                ],
+            )
+        except ClickUpError as e:
+            return MCPResult(is_error=True, content=[TextContent(type="text", text=f"❌ ClickUp API Error: {str(e)}")])
+        except Exception as e:
+            logger.exception("Error searching tasks")
+            return MCPResult(is_error=True, content=[TextContent(type="text", text=f"❌ Error: {str(e)}")])
+
+    async def get_workspaces(self) -> MCPResult:
+        """Get workspaces/teams."""
+        try:
+            client = await self._get_client()
+            teams = await client.get_teams()
+
+            if not teams:
+                return MCPResult(is_error=False, content=[TextContent(type="text", text="📁 No workspaces found")])
+
+            team_list = []
+            for team in teams:
+                team_list.append(f"• {team.name} (ID: {team.id})")
+
+            return MCPResult(
+                is_error=False,
+                content=[
+                    TextContent(type="text", text=f"📁 Found {len(teams)} workspaces:\n\n" + "\n".join(team_list))
+                ],
+            )
+        except ClickUpError as e:
+            return MCPResult(is_error=True, content=[TextContent(type="text", text=f"❌ ClickUp API Error: {str(e)}")])
+        except Exception as e:
+            logger.exception("Error getting workspaces")
+            return MCPResult(is_error=True, content=[TextContent(type="text", text=f"❌ Error: {str(e)}")])
+
+    async def delete_task(self, task_id: str) -> MCPResult:
+        """Delete a task."""
+        try:
+            client = await self._get_client()
+            await client.delete_task(task_id)
+            return MCPResult(is_error=False, content=[TextContent(type="text", text=f"🗑️ Deleted task {task_id}")])
+        except ClickUpError as e:
+            return MCPResult(is_error=True, content=[TextContent(type="text", text=f"❌ ClickUp API Error: {str(e)}")])
+        except Exception as e:
+            logger.exception("Error deleting task")
+            return MCPResult(is_error=True, content=[TextContent(type="text", text=f"❌ Error: {str(e)}")])
+
+    async def get_task_details(self, task_id: str) -> MCPResult:
+        """Get detailed task information."""
+        try:
+            client = await self._get_client()
+            task = await client.get_task(task_id)
+            assignees = ", ".join([a.username for a in task.assignees]) if task.assignees else "Unassigned"
+            status = task.status.get("status", "Unknown") if task.status else "Unknown"
+            priority = task.priority.get("priority", "None") if task.priority else "None"
+
+            return MCPResult(
+                is_error=False,
+                content=[
+                    TextContent(
+                        type="text",
+                        text=f"📋 Task: {task.name}\n"
+                        f"ID: {task.id}\n"
+                        f"Status: {status}\n"
+                        f"Assignees: {assignees}\n"
+                        f"Priority: {priority}\n"
+                        f"Due Date: {task.due_date or 'None'}\n"
+                        f"Description: {task.description or 'None'}\n"
+                        f"URL: {task.url or 'N/A'}",
+                    )
+                ],
+            )
+        except ClickUpError as e:
+            return MCPResult(is_error=True, content=[TextContent(type="text", text=f"❌ ClickUp API Error: {str(e)}")])
+        except Exception as e:
+            logger.exception("Error getting task details")
+            return MCPResult(is_error=True, content=[TextContent(type="text", text=f"❌ Error: {str(e)}")])
 
 
 # Tools
@@ -417,13 +594,13 @@ Format the output as:
 - 📋 **Planned for Today**: [list upcoming tasks]
 """
 
-        return PromptMessage(role=Role.user, content=TextContent(type="text", text=prompt_text))
+        return PromptMessage(role="user", content=TextContent(type="text", text=prompt_text))
 
     elif name == "project_overview":
         list_id = arguments.get("list_id") if arguments else None
 
         return PromptMessage(
-            role=Role.user,
+            role="user",
             content=TextContent(
                 type="text",
                 text=f"""Generate a comprehensive project overview for ClickUp list {list_id}.
@@ -459,7 +636,7 @@ Format as a clear, executive-friendly report.""",
         severity = arguments.get("severity", "medium") if arguments else "medium"
 
         return PromptMessage(
-            role=Role.user,
+            role="user",
             content=TextContent(
                 type="text",
                 text=f"""Create a bug report in ClickUp list {list_id} with severity: {severity}
@@ -499,7 +676,7 @@ Please ask me for the specific bug details to fill in this template.""",
         )
 
     else:
-        return PromptMessage(role=Role.user, content=TextContent(type="text", text=f"Unknown prompt: {name}"))
+        return PromptMessage(role="user", content=TextContent(type="text", text=f"Unknown prompt: {name}"))
 
 
 async def main():

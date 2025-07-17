@@ -1,12 +1,11 @@
 """Configuration management commands."""
 
-import asyncio
-
 import typer
 from rich.console import Console
 from rich.table import Table
 
 from ...core import ClickUpClient, Config
+from ..utils import run_async
 
 app = typer.Typer(help="Configuration management")
 console = Console()
@@ -26,6 +25,14 @@ def set_client_secret(client_secret: str = typer.Argument(..., help="ClickUp Cli
     config = Config()
     config.set_client_secret(client_secret)
     console.print("✅ Client Secret configured successfully!")
+
+
+@app.command("set-token")
+def set_api_token(api_token: str = typer.Argument(..., help="ClickUp API Token")):
+    """Set your ClickUp API Token."""
+    config = Config()
+    config.set_api_token(api_token)
+    console.print("✅ API Token configured successfully!")
 
 
 @app.command("set")
@@ -64,7 +71,7 @@ def show_config():
     table.add_column("Value", style="green")
 
     for key, value in config.config.model_dump(exclude_none=True).items():
-        if key == "client_secret" and value:
+        if key in ("client_secret", "api_token") and value:
             value = "***"
         elif key == "client_id" and value:
             value = f"{value[:8]}...{value[-4:]}" if len(value) > 12 else "***"
@@ -120,4 +127,4 @@ def validate_auth():
             console.print(f"[red]❌ Error validating credentials: {str(e)}[/red]")
             raise typer.Exit(1) from e
 
-    asyncio.run(_validate())
+    run_async(_validate())
