@@ -320,8 +320,10 @@ async def handle_call_tool(name: str, arguments: dict[str, Any] | None) -> list[
     mcp_server = ClickUpMCPServer()
 
     try:
-        async with await mcp_server.get_client() as client:
-            if name == "create_task":
+        if name == "create_task":
+            if not mcp_server.config.has_credentials():
+                return [TextContent(type="text", text="❌ ClickUp API Error: ClickUp API token not configured")]
+            async with await mcp_server.get_client() as client:
                 task_data = {k: v for k, v in (arguments or {}).items() if k != "list_id"}
                 task = await client.create_task(arguments["list_id"], **task_data)
                 return [
@@ -330,7 +332,10 @@ async def handle_call_tool(name: str, arguments: dict[str, Any] | None) -> list[
                     )
                 ]
 
-            elif name == "get_task":
+        elif name == "get_task":
+            if not mcp_server.config.has_credentials():
+                return [TextContent(type="text", text="❌ ClickUp API Error: ClickUp API token not configured")]
+            async with await mcp_server.get_client() as client:
                 task = await client.get_task(arguments["task_id"])
                 assignees = ", ".join([a.username for a in task.assignees]) if task.assignees else "Unassigned"
                 status = task.status.get("status", "Unknown") if task.status else "Unknown"
@@ -350,7 +355,10 @@ async def handle_call_tool(name: str, arguments: dict[str, Any] | None) -> list[
                     )
                 ]
 
-            elif name == "update_task":
+        elif name == "update_task":
+            if not mcp_server.config.has_credentials():
+                return [TextContent(type="text", text="❌ ClickUp API Error: ClickUp API token not configured")]
+            async with await mcp_server.get_client() as client:
                 task_id = arguments.pop("task_id")
                 updates = {k: v for k, v in arguments.items() if v is not None}
                 if not updates:
@@ -359,7 +367,10 @@ async def handle_call_tool(name: str, arguments: dict[str, Any] | None) -> list[
                 task = await client.update_task(task_id, **updates)
                 return [TextContent(type="text", text=f"✅ Updated task: {task.name}\nID: {task.id}")]
 
-            elif name == "list_tasks":
+        elif name == "list_tasks":
+            if not mcp_server.config.has_credentials():
+                return [TextContent(type="text", text="❌ ClickUp API Error: ClickUp API token not configured")]
+            async with await mcp_server.get_client() as client:
                 list_id = arguments.pop("list_id")
                 filters = {k: v for k, v in arguments.items() if v is not None}
                 limit = filters.pop("limit", 50)
@@ -378,7 +389,10 @@ async def handle_call_tool(name: str, arguments: dict[str, Any] | None) -> list[
 
                 return [TextContent(type="text", text=f"📝 Found {len(tasks)} tasks:\n\n" + "\n".join(task_list))]
 
-            elif name == "search_tasks":
+        elif name == "search_tasks":
+            if not mcp_server.config.has_credentials():
+                return [TextContent(type="text", text="❌ ClickUp API Error: ClickUp API token not configured")]
+            async with await mcp_server.get_client() as client:
                 team_id = arguments["team_id"]
                 query = arguments["query"]
                 limit = arguments.get("limit", 50)
@@ -400,16 +414,22 @@ async def handle_call_tool(name: str, arguments: dict[str, Any] | None) -> list[
                     )
                 ]
 
-            elif name == "delete_task":
+        elif name == "delete_task":
+            if not mcp_server.config.has_credentials():
+                return [TextContent(type="text", text="❌ ClickUp API Error: ClickUp API token not configured")]
+            async with await mcp_server.get_client() as client:
                 await client.delete_task(arguments["task_id"])
                 return [TextContent(type="text", text=f"🗑️ Deleted task {arguments['task_id']}")]
 
-            elif name == "create_comment":
+        elif name == "create_comment":
+            if not mcp_server.config.has_credentials():
+                return [TextContent(type="text", text="❌ ClickUp API Error: ClickUp API token not configured")]
+            async with await mcp_server.get_client() as client:
                 await client.create_comment(arguments["task_id"], arguments["comment"])
                 return [TextContent(type="text", text=f"💬 Added comment to task {arguments['task_id']}")]
 
-            else:
-                return [TextContent(type="text", text=f"❌ Unknown tool: {name}")]
+        else:
+            return [TextContent(type="text", text=f"❌ Unknown tool: {name}")]
 
     except ClickUpError as e:
         return [TextContent(type="text", text=f"❌ ClickUp API Error: {str(e)}")]
@@ -462,8 +482,10 @@ async def handle_get_resource(uri: str) -> str:
     mcp_server = ClickUpMCPServer()
 
     try:
-        async with await mcp_server.get_client() as client:
-            if uri == "clickup://workspaces":
+        if uri == "clickup://workspaces":
+            if not mcp_server.config.has_credentials():
+                return json.dumps({"error": "ClickUp API Error: ClickUp API token not configured"})
+            async with await mcp_server.get_client() as client:
                 teams = await client.get_teams()
                 return json.dumps(
                     [
@@ -473,7 +495,10 @@ async def handle_get_resource(uri: str) -> str:
                     indent=2,
                 )
 
-            elif uri.startswith("clickup://spaces/"):
+        elif uri.startswith("clickup://spaces/"):
+            if not mcp_server.config.has_credentials():
+                return json.dumps({"error": "ClickUp API Error: ClickUp API token not configured"})
+            async with await mcp_server.get_client() as client:
                 workspace_id = uri.split("/")[-1]
                 spaces = await client.get_spaces(workspace_id)
                 return json.dumps(
@@ -489,7 +514,10 @@ async def handle_get_resource(uri: str) -> str:
                     indent=2,
                 )
 
-            elif uri.startswith("clickup://folders/"):
+        elif uri.startswith("clickup://folders/"):
+            if not mcp_server.config.has_credentials():
+                return json.dumps({"error": "ClickUp API Error: ClickUp API token not configured"})
+            async with await mcp_server.get_client() as client:
                 space_id = uri.split("/")[-1]
                 folders = await client.get_folders(space_id)
                 return json.dumps(
@@ -500,7 +528,10 @@ async def handle_get_resource(uri: str) -> str:
                     indent=2,
                 )
 
-            elif uri.startswith("clickup://lists/"):
+        elif uri.startswith("clickup://lists/"):
+            if not mcp_server.config.has_credentials():
+                return json.dumps({"error": "ClickUp API Error: ClickUp API token not configured"})
+            async with await mcp_server.get_client() as client:
                 folder_id = uri.split("/")[-1]
                 lists = await client.get_lists(folder_id)
                 return json.dumps(
@@ -516,7 +547,10 @@ async def handle_get_resource(uri: str) -> str:
                     indent=2,
                 )
 
-            elif uri.startswith("clickup://members/"):
+        elif uri.startswith("clickup://members/"):
+            if not mcp_server.config.has_credentials():
+                return json.dumps({"error": "ClickUp API Error: ClickUp API token not configured"})
+            async with await mcp_server.get_client() as client:
                 workspace_id = uri.split("/")[-1]
                 members = await client.get_team_members(workspace_id)
                 return json.dumps(
@@ -527,8 +561,8 @@ async def handle_get_resource(uri: str) -> str:
                     indent=2,
                 )
 
-            else:
-                return json.dumps({"error": f"Unknown resource: {uri}"})
+        else:
+            return json.dumps({"error": f"Unknown resource: {uri}"})
 
     except ClickUpError as e:
         return json.dumps({"error": f"ClickUp API Error: {str(e)}"})
