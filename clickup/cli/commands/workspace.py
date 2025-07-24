@@ -25,10 +25,10 @@ async def get_client() -> ClickUpClient:
 
 
 @app.command("list")
-def list_workspaces():
+def list_workspaces() -> None:
     """List all available workspaces/teams."""
 
-    async def _list_workspaces():
+    async def _list_workspaces() -> None:
         try:
             async with await get_client() as client:
                 with Progress(
@@ -69,10 +69,10 @@ def list_spaces(
     workspace_id: str | None = typer.Option(None, "--workspace-id", "-w", help="Workspace ID"),
     team_id: str | None = typer.Option(None, "--team-id", "-t", help="Team ID (alias for workspace-id)"),
     show_private: bool = typer.Option(False, "--show-private", help="Show privacy information"),
-):
+) -> None:
     """List spaces in a workspace."""
 
-    async def _list_spaces():
+    async def _list_spaces() -> None:
         config = Config()
         workspace_id_to_use = workspace_id or team_id or config.get("default_team_id")
 
@@ -120,10 +120,10 @@ def list_spaces(
 def list_folders(
     space_id: str | None = typer.Option(None, "--space-id", "-s", help="Space ID"),
     show_counts: bool = typer.Option(False, "--show-counts", help="Show task count information"),
-):
+) -> None:
     """List folders in a space."""
 
-    async def _list_folders():
+    async def _list_folders() -> None:
         config = Config()
         space_id_to_use = space_id or config.get("default_space_id")
 
@@ -172,10 +172,10 @@ def list_members(
     workspace_id: str | None = typer.Option(None, "--workspace-id", "-w", help="Workspace ID"),
     team_id: str | None = typer.Option(None, "--team-id", "-t", help="Team ID (alias for workspace-id)"),
     role: str | None = typer.Option(None, "--role", help="Filter by role"),
-):
+) -> None:
     """List members in a workspace."""
 
-    async def _list_members():
+    async def _list_members() -> None:
         config = Config()
         workspace_id_to_use = workspace_id or team_id or config.get("default_team_id")
 
@@ -210,7 +210,7 @@ def list_members(
                         str(member.id),
                         member.username,
                         member.email,
-                        member.role or "None",
+                        getattr(member, "role", "None"),
                         member.color or "None",
                     )
 
