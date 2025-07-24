@@ -128,3 +128,49 @@ def validate_auth() -> None:
             raise typer.Exit(1) from e
 
     run_async(_validate())
+
+
+@app.command("set-default-list")
+def set_default_list(
+    alias: str = typer.Argument(..., help="Alias name for the list"),
+    list_id: str = typer.Argument(..., help="ClickUp List ID")
+) -> None:
+    """Set a default list with an alias."""
+    config = Config()
+    config.set_default_list(alias, list_id)
+    console.print(f"✅ Default list '{alias}' configured with ID: {list_id}")
+
+
+@app.command("list-defaults")
+def list_defaults() -> None:
+    """Show all configured default lists."""
+    config = Config()
+    default_lists = config.get_default_lists()
+    
+    if not default_lists:
+        console.print("[yellow]No default lists configured.[/yellow]")
+        console.print("Use 'clickup config set-default-list' to configure default lists.")
+        return
+    
+    from rich.table import Table
+    table = Table(title="Default Lists", show_header=True)
+    table.add_column("Alias", style="cyan")
+    table.add_column("List ID", style="green")
+    
+    for alias, list_id in default_lists.items():
+        table.add_row(alias, list_id)
+    
+    console.print(table)
+
+
+@app.command("remove-default-list")
+def remove_default_list(
+    alias: str = typer.Argument(..., help="Alias name to remove")
+) -> None:
+    """Remove a default list alias."""
+    config = Config()
+    if config.remove_default_list(alias):
+        console.print(f"✅ Removed default list alias: {alias}")
+    else:
+        console.print(f"[red]❌ Default list alias '{alias}' not found.[/red]")
+        raise typer.Exit(1)

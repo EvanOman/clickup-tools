@@ -26,6 +26,7 @@ class ClickUpConfig(BaseModel):
     default_team_id: str | None = None
     default_space_id: str | None = None
     default_list_id: str | None = None
+    default_lists: dict[str, str] = {}
     timeout: int = 30
     max_retries: int = 3
     output_format: str = "table"  # table, json, csv
@@ -202,6 +203,55 @@ class Config:
         """Set default team ID."""
         self._config.default_team_id = team_id
         self.save_config()
+    def set_default_list(self, alias: str, list_id: str) -> None:
+        """Set a default list with an alias."""
+        self._config.default_lists[alias] = list_id
+        self.save_config()
+
+    def get_default_list(self, alias: str) -> str | None:
+        """Get a default list ID by alias."""
+        return self._config.default_lists.get(alias)
+
+    def get_default_lists(self) -> dict[str, str]:
+        """Get all default lists."""
+        return self._config.default_lists.copy()
+
+    def remove_default_list(self, alias: str) -> bool:
+        """Remove a default list alias. Returns True if removed, False if not found."""
+        if alias in self._config.default_lists:
+            del self._config.default_lists[alias]
+            self.save_config()
+            return True
+        return False
+
+    def resolve_list_id(self, list_ref: str) -> str:
+        """Resolve a list reference (ID or alias) to a list ID.
+        
+        Args:
+            list_ref: Either a list ID or an alias
+            
+        Returns:
+            The resolved list ID
+            
+        Raises:
+            ValueError: If the alias is not found
+        """
+        # If it's already a list ID (numeric), return as-is
+        if list_ref.isdigit():
+            return list_ref
+            
+        # Try to resolve as alias
+        list_id = self.get_default_list(list_ref)
+        if list_id:
+            return list_id
+            
+        # If not found, raise error with helpful message
+        available_aliases = list(self._config.default_lists.keys())
+        if available_aliases:
+            aliases_str = ", ".join(available_aliases)
+            raise ValueError(f"Unknown list alias '{list_ref}'. Available aliases: {aliases_str}")
+        else:
+            raise ValueError(f"Unknown list alias '{list_ref}'. No default lists configured. Use 'clickup config set-default-list' to configure aliases.")
 
     def get_headers(self) -> dict[str, str]:
         """Get HTTP headers for API requests."""
