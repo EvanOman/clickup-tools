@@ -173,25 +173,7 @@ def test_cli_help():
     assert "workspace" in result.stdout
 
 
-def test_config_set_client_id():
-    """Test setting client ID via CLI."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        with patch.dict("os.environ", {"HOME": tmpdir}):
-            result = runner.invoke(app, ["config", "set-client-id", "test_client_id_123"])
-            assert result.exit_code == 0
-            assert "configured successfully" in result.stdout
-
-
-def test_config_set_client_secret():
-    """Test setting client secret via CLI."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        with patch.dict("os.environ", {"HOME": tmpdir}):
-            result = runner.invoke(app, ["config", "set-client-secret", "test_client_secret_123"])
-            assert result.exit_code == 0
-            assert "configured successfully" in result.stdout
-
-
-def test_task_help():
+def test_config_set_client_id():\n    \"\"\"Test setting client ID via CLI.\"\"\"\n    with tempfile.TemporaryDirectory() as tmpdir:\n        with patch.dict(\"os.environ\", {\"HOME\": tmpdir}):\n            result = runner.invoke(app, [\"config\", \"set-client-id\", \"test_client_id_123\"])\n            assert result.exit_code == 0\n            assert \"configured successfully\" in result.stdout\n\n\ndef test_config_set_client_secret():\n    \"\"\"Test setting client secret via CLI.\"\"\"\n    with tempfile.TemporaryDirectory() as tmpdir:\n        with patch.dict(\"os.environ\", {\"HOME\": tmpdir}):\n            result = runner.invoke(app, [\"config\", \"set-client-secret\", \"test_client_secret_123\"])\n            assert result.exit_code == 0\n            assert \"configured successfully\" in result.stdout\n\n\ndef test_config_reset():\n    \"\"\"Test resetting configuration.\"\"\"\n    with tempfile.TemporaryDirectory() as tmpdir:\n        with patch.dict(\"os.environ\", {\"HOME\": tmpdir}):\n            # First set some config\n            runner.invoke(app, [\"config\", \"set-token\", \"test_token_123\"])\n            \n            # Then reset it\n            result = runner.invoke(app, [\"config\", \"reset\"], input=\"y\\n\")\n            assert result.exit_code == 0\n            assert \"reset\" in result.stdout.lower()\n\n\ndef test_task_help():
     """Test task subcommand help."""
     result = runner.invoke(app, ["task", "--help"])
     assert result.exit_code == 0

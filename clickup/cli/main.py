@@ -30,10 +30,10 @@ console = Console()
 
 
 @app.command()
-def status():
+def status() -> None:
     """Show ClickUp connection status and current configuration."""
 
-    async def _status():
+    async def _status() -> None:
         config_manager = Config()
 
         table = Table(title="ClickUp Status", show_header=True)
@@ -92,19 +92,19 @@ def status():
 
 
 @app.command()
-def version():
+def version() -> None:
     """Show version information."""
     from . import __version__
 
     console.print(f"ClickUp Toolkit CLI v{__version__}")
 
 
-async def async_main():
+async def async_main() -> None:
     """Async wrapper for CLI commands that need async support."""
     app()
 
 
-def main():
+def main() -> None:
     """Main entry point for the CLI."""
     try:
         app()

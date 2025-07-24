@@ -12,7 +12,7 @@ console = Console()
 
 
 @app.command("set-client-id")
-def set_client_id(client_id: str = typer.Argument(..., help="ClickUp Client ID")):
+def set_client_id(client_id: str = typer.Argument(..., help="ClickUp Client ID")) -> None:
     """Set your ClickUp Client ID."""
     config = Config()
     config.set_client_id(client_id)
@@ -20,7 +20,7 @@ def set_client_id(client_id: str = typer.Argument(..., help="ClickUp Client ID")
 
 
 @app.command("set-client-secret")
-def set_client_secret(client_secret: str = typer.Argument(..., help="ClickUp Client Secret")):
+def set_client_secret(client_secret: str = typer.Argument(..., help="ClickUp Client Secret")) -> None:
     """Set your ClickUp Client Secret."""
     config = Config()
     config.set_client_secret(client_secret)
@@ -28,7 +28,7 @@ def set_client_secret(client_secret: str = typer.Argument(..., help="ClickUp Cli
 
 
 @app.command("set-token")
-def set_api_token(api_token: str = typer.Argument(..., help="ClickUp API Token")):
+def set_api_token(api_token: str = typer.Argument(..., help="ClickUp API Token")) -> None:
     """Set your ClickUp API Token."""
     config = Config()
     config.set_api_token(api_token)
@@ -39,7 +39,7 @@ def set_api_token(api_token: str = typer.Argument(..., help="ClickUp API Token")
 def set_config(
     key: str = typer.Argument(..., help="Configuration key"),
     value: str = typer.Argument(..., help="Configuration value"),
-):
+) -> None:
     """Set a configuration value."""
     config = Config()
     try:
@@ -51,7 +51,7 @@ def set_config(
 
 
 @app.command("get")
-def get_config(key: str = typer.Argument(..., help="Configuration key")):
+def get_config(key: str = typer.Argument(..., help="Configuration key")) -> None:
     """Get a configuration value."""
     config = Config()
     value = config.get(key)
@@ -62,7 +62,7 @@ def get_config(key: str = typer.Argument(..., help="Configuration key")):
 
 
 @app.command("show")
-def show_config():
+def show_config() -> None:
     """Show all configuration values."""
     config = Config()
 
@@ -81,7 +81,7 @@ def show_config():
 
 
 @app.command("reset")
-def reset_config():
+def reset_config() -> None:
     """Reset configuration to defaults."""
     if typer.confirm("Are you sure you want to reset all configuration?"):
         config = Config()
@@ -90,10 +90,10 @@ def reset_config():
 
 
 @app.command("validate")
-def validate_auth():
+def validate_auth() -> None:
     """Validate API credentials by checking user info."""
 
-    async def _validate():
+    async def _validate() -> None:
         config = Config()
         if not config.has_credentials():
             console.print("[red]❌ No API credentials configured[/red]")
@@ -128,3 +128,49 @@ def validate_auth():
             raise typer.Exit(1) from e
 
     run_async(_validate())
+
+
+@app.command("set-default-list")
+def set_default_list(
+    alias: str = typer.Argument(..., help="Alias name for the list"),
+    list_id: str = typer.Argument(..., help="ClickUp List ID")
+) -> None:
+    """Set a default list with an alias."""
+    config = Config()
+    config.set_default_list(alias, list_id)
+    console.print(f"✅ Default list '{alias}' configured with ID: {list_id}")
+
+
+@app.command("list-defaults")
+def list_defaults() -> None:
+    """Show all configured default lists."""
+    config = Config()
+    default_lists = config.get_default_lists()
+    
+    if not default_lists:
+        console.print("[yellow]No default lists configured.[/yellow]")
+        console.print("Use 'clickup config set-default-list' to configure default lists.")
+        return
+    
+    from rich.table import Table
+    table = Table(title="Default Lists", show_header=True)
+    table.add_column("Alias", style="cyan")
+    table.add_column("List ID", style="green")
+    
+    for alias, list_id in default_lists.items():
+        table.add_row(alias, list_id)
+    
+    console.print(table)
+
+
+@app.command("remove-default-list")
+def remove_default_list(
+    alias: str = typer.Argument(..., help="Alias name to remove")
+) -> None:
+    """Remove a default list alias."""
+    config = Config()
+    if config.remove_default_list(alias):
+        console.print(f"✅ Removed default list alias: {alias}")
+    else:
+        console.print(f"[red]❌ Default list alias '{alias}' not found.[/red]")
+        raise typer.Exit(1)

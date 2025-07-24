@@ -17,7 +17,7 @@ def run_async[T](coro: Awaitable[T]) -> T:
     """
     import concurrent.futures
 
-    def _run_in_new_loop():
+    def _run_in_new_loop() -> T:
         """Run coroutine in a completely new event loop."""
         new_loop = asyncio.new_event_loop()
         try:
@@ -40,7 +40,7 @@ def run_async[T](coro: Awaitable[T]) -> T:
     except RuntimeError:
         # No running loop, safe to use asyncio.run()
         try:
-            return asyncio.run(coro)
+            return asyncio.run(coro)  # type: ignore[arg-type]
         except RuntimeError as e:
             if "cannot be called from a running event loop" in str(e):
                 # Fallback to thread approach

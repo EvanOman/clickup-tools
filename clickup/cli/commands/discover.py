@@ -32,10 +32,10 @@ def show_hierarchy(
     ),
     team_id: str | None = typer.Option(None, "--team-id", "-t", help="Team ID (alias for workspace-id)"),
     max_depth: int = typer.Option(3, "--depth", "-d", help="Maximum depth to explore"),
-):
+) -> None:
     """Show the complete ClickUp hierarchy tree."""
 
-    async def _show_hierarchy():
+    async def _show_hierarchy() -> None:
         try:
             async with await get_client() as client:
                 with Progress(
@@ -121,10 +121,10 @@ def show_ids(
     team_id: str | None = typer.Option(None, "--team-id", "-t", help="Team ID (alias for workspace-id)"),
     space_id: str | None = typer.Option(None, "--space-id", "-s", help="Space ID"),
     folder_id: str | None = typer.Option(None, "--folder-id", "-f", help="Folder ID"),
-):
+) -> None:
     """Show IDs for easy copy-paste. Use --folder-id to get list IDs."""
 
-    async def _show_ids():
+    async def _show_ids() -> None:
         try:
             async with await get_client() as client:
                 if folder_id:
@@ -169,6 +169,7 @@ def show_ids(
                 elif workspace_id or team_id:
                     # Show spaces in workspace
                     id_to_use = workspace_id or team_id
+                    assert id_to_use is not None  # workspace_id or team_id must be provided
                     spaces = await client.get_spaces(id_to_use)
                     if spaces:
                         table = Table(title=f"Spaces in Workspace {id_to_use}")
@@ -214,10 +215,10 @@ def show_ids(
 
 
 @app.command("path")
-def find_path(list_id: str = typer.Argument(..., help="List ID to find path for")):
+def find_path(list_id: str = typer.Argument(..., help="List ID to find path for")) -> None:
     """Show the full path to a list (Workspace > Space > Folder > List)."""
 
-    async def _find_path():
+    async def _find_path() -> None:
         try:
             async with await get_client() as client:
                 with Progress(
