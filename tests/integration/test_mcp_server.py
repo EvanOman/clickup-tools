@@ -1,6 +1,7 @@
 """Integration tests for MCP server."""
 
 import json
+import os
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -9,9 +10,21 @@ from clickup.mcp.server import ClickUpMCPServer
 
 
 @pytest.fixture
-def mcp_server():
+def mcp_server(tmp_path, monkeypatch):
     """Create MCP server instance for testing."""
-    return ClickUpMCPServer()
+    # Clear environment variables
+    monkeypatch.delenv("CLICKUP_API_TOKEN", raising=False)
+    monkeypatch.delenv("CLICKUP_API_KEY", raising=False)
+    monkeypatch.delenv("CLICKUP_CLIENT_ID", raising=False)
+    monkeypatch.delenv("CLICKUP_CLIENT_SECRET", raising=False)
+
+    # Use a temporary config path to avoid picking up user config
+    config_path = tmp_path / "config.json"
+    from clickup.core.config import Config
+
+    server = ClickUpMCPServer()
+    server.config = Config(config_path=config_path)
+    return server
 
 
 @pytest.mark.asyncio
@@ -29,7 +42,7 @@ async def test_get_client_no_token(mcp_server):
 
 
 @pytest.mark.asyncio
-@patch("clickup_toolkit_mcp.server.ClickUpClient")
+@patch("clickup.mcp.server.ClickUpClient")
 async def test_get_client_with_token(mock_client_class, mcp_server):
     """Test getting client with API token."""
     mcp_server.config.set_api_token("test_token")
@@ -62,13 +75,13 @@ async def test_list_resources():
     from clickup.mcp.server import handle_list_resources
 
     resources = await handle_list_resources()
-    resource_uris = [resource.uri for resource in resources]
+    resource_uris = [str(resource.uri) for resource in resources]
 
     assert "clickup://workspaces" in resource_uris
-    assert "clickup://spaces/{workspace_id}" in resource_uris
-    assert "clickup://folders/{space_id}" in resource_uris
-    assert "clickup://lists/{folder_id}" in resource_uris
-    assert "clickup://members/{workspace_id}" in resource_uris
+    assert "clickup://spaces/%7Bworkspace_id%7D" in resource_uris
+    assert "clickup://folders/%7Bspace_id%7D" in resource_uris
+    assert "clickup://lists/%7Bfolder_id%7D" in resource_uris
+    assert "clickup://members/%7Bworkspace_id%7D" in resource_uris
 
 
 @pytest.mark.asyncio
@@ -85,96 +98,131 @@ async def test_list_prompts():
 
 
 @pytest.mark.asyncio
-@patch("clickup.mcp.server.ClickUpMCPServer.get_client")
-async def test_create_task_tool(mock_get_client, sample_task):
+@patch.dict(os.environ, {}, clear=True)
+async def test_create_task_tool(sample_task):
     """Test create_task tool."""
     from clickup.mcp.server import handle_call_tool
 
     mock_client = AsyncMock()
     mock_client.__aenter__.return_value = mock_client
     mock_client.create_task.return_value = sample_task
-    mock_get_client.return_value = mock_client
 
-    arguments = {"name": "Test Task", "list_id": "123456", "description": "Test description"}
+    with patch("clickup.mcp.server.ClickUpMCPServer") as mock_server_class:
+        mock_server = AsyncMock()
+        mock_config = AsyncMock()
+        mock_config.has_credentials.return_value = True
+        mock_server.config = mock_config
+        mock_server.get_client.return_value = mock_client
+        mock_server_class.return_value = mock_server
 
-    result = await handle_call_tool("create_task", arguments)
-    assert len(result) == 1
-    assert "Created task" in result[0].text
-    assert "Test Task" in result[0].text
+        arguments = {"name": "Test Task", "list_id": "123456", "description": "Test description"}
+
+        result = await handle_call_tool("create_task", arguments)
+        assert len(result) == 1
+        assert "Created task" in result[0].text
+        assert "Test Task" in result[0].text
 
 
 @pytest.mark.asyncio
-@patch("clickup.mcp.server.ClickUpMCPServer.get_client")
-async def test_get_task_tool(mock_get_client, sample_task):
+@patch.dict(os.environ, {}, clear=True)
+async def test_get_task_tool(sample_task):
     """Test get_task tool."""
     from clickup.mcp.server import handle_call_tool
 
     mock_client = AsyncMock()
     mock_client.__aenter__.return_value = mock_client
     mock_client.get_task.return_value = sample_task
-    mock_get_client.return_value = mock_client
 
-    arguments = {"task_id": "task123"}
+    with patch("clickup.mcp.server.ClickUpMCPServer") as mock_server_class:
+        mock_server = AsyncMock()
+        mock_config = AsyncMock()
+        mock_config.has_credentials.return_value = True
+        mock_server.config = mock_config
+        mock_server.get_client.return_value = mock_client
+        mock_server_class.return_value = mock_server
 
-    result = await handle_call_tool("get_task", arguments)
-    assert len(result) == 1
-    assert "Test Task" in result[0].text
-    assert "task123" in result[0].text
+        arguments = {"task_id": "task123"}
+
+        result = await handle_call_tool("get_task", arguments)
+        assert len(result) == 1
+        assert "Test Task" in result[0].text
+        assert "task123" in result[0].text
 
 
 @pytest.mark.asyncio
-@patch("clickup.mcp.server.ClickUpMCPServer.get_client")
-async def test_list_tasks_tool(mock_get_client, sample_task):
+@patch.dict(os.environ, {}, clear=True)
+async def test_list_tasks_tool(sample_task):
     """Test list_tasks tool."""
     from clickup.mcp.server import handle_call_tool
 
     mock_client = AsyncMock()
     mock_client.__aenter__.return_value = mock_client
     mock_client.get_tasks.return_value = [sample_task, sample_task]
-    mock_get_client.return_value = mock_client
 
-    arguments = {"list_id": "123456"}
+    with patch("clickup.mcp.server.ClickUpMCPServer") as mock_server_class:
+        mock_server = AsyncMock()
+        mock_config = AsyncMock()
+        mock_config.has_credentials.return_value = True
+        mock_server.config = mock_config
+        mock_server.get_client.return_value = mock_client
+        mock_server_class.return_value = mock_server
 
-    result = await handle_call_tool("list_tasks", arguments)
-    assert len(result) == 1
-    assert "Found 2 tasks" in result[0].text
+        arguments = {"list_id": "123456"}
+
+        result = await handle_call_tool("list_tasks", arguments)
+        assert len(result) == 1
+        assert "Found 2 tasks" in result[0].text
 
 
 @pytest.mark.asyncio
-@patch("clickup.mcp.server.ClickUpMCPServer.get_client")
-async def test_delete_task_tool(mock_get_client):
+@patch.dict(os.environ, {}, clear=True)
+async def test_delete_task_tool():
     """Test delete_task tool."""
     from clickup.mcp.server import handle_call_tool
 
     mock_client = AsyncMock()
     mock_client.__aenter__.return_value = mock_client
     mock_client.delete_task.return_value = True
-    mock_get_client.return_value = mock_client
 
-    arguments = {"task_id": "task123"}
+    with patch("clickup.mcp.server.ClickUpMCPServer") as mock_server_class:
+        mock_server = AsyncMock()
+        mock_config = AsyncMock()
+        mock_config.has_credentials.return_value = True
+        mock_server.config = mock_config
+        mock_server.get_client.return_value = mock_client
+        mock_server_class.return_value = mock_server
 
-    result = await handle_call_tool("delete_task", arguments)
-    assert len(result) == 1
-    assert "Deleted task task123" in result[0].text
+        arguments = {"task_id": "task123"}
+
+        result = await handle_call_tool("delete_task", arguments)
+        assert len(result) == 1
+        assert "Deleted task task123" in result[0].text
 
 
 @pytest.mark.asyncio
-@patch("clickup.mcp.server.ClickUpMCPServer.get_client")
-async def test_get_workspaces_resource(mock_get_client, sample_team):
+@patch.dict(os.environ, {}, clear=True)
+async def test_get_workspaces_resource(sample_team):
     """Test getting workspaces resource."""
     from clickup.mcp.server import handle_get_resource
 
     mock_client = AsyncMock()
     mock_client.__aenter__.return_value = mock_client
     mock_client.get_teams.return_value = [sample_team]
-    mock_get_client.return_value = mock_client
 
-    result = await handle_get_resource("clickup://workspaces")
-    data = json.loads(result)
+    with patch("clickup.mcp.server.ClickUpMCPServer") as mock_server_class:
+        mock_server = AsyncMock()
+        mock_config = AsyncMock()
+        mock_config.has_credentials.return_value = True
+        mock_server.config = mock_config
+        mock_server.get_client.return_value = mock_client
+        mock_server_class.return_value = mock_server
 
-    assert len(data) == 1
-    assert data[0]["id"] == "team123"
-    assert data[0]["name"] == "Test Team"
+        result = await handle_get_resource("clickup://workspaces")
+        data = json.loads(result)
+
+        assert len(data) == 1
+        assert data[0]["id"] == "team123"
+        assert data[0]["name"] == "Test Team"
 
 
 @pytest.mark.asyncio

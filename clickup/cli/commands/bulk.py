@@ -1,6 +1,5 @@
 """Bulk operations and import/export commands."""
 
-import asyncio
 import csv
 import json
 from pathlib import Path
@@ -17,14 +16,10 @@ from rich.progress import (
 from rich.table import Table
 
 from ...core import ClickUpClient, ClickUpError, Config
+from ..utils import run_async
 
 app = typer.Typer(help="Bulk operations and import/export")
 console = Console()
-
-
-def run_async(coro):
-    """Helper to run async functions in sync context."""
-    return asyncio.run(coro)
 
 
 async def get_client() -> ClickUpClient:
@@ -41,7 +36,7 @@ async def get_client() -> ClickUpClient:
 
 @app.command("export-tasks")
 def export_tasks(
-    list_id: str = typer.Argument(..., help="List ID to export tasks from"),
+    list_id: str | None = typer.Option(None, "--list-id", help="List ID to export tasks from"),
     output_file: str = typer.Option("tasks.csv", "--output", "-o", help="Output file path"),
     format: str = typer.Option("csv", "--format", "-f", help="Output format (csv, json)"),
     include_completed: bool = typer.Option(True, "--include-completed", help="Include completed tasks"),
@@ -49,6 +44,14 @@ def export_tasks(
     """Export tasks to CSV or JSON file."""
 
     async def _export_tasks():
+        config = Config()
+        list_id_to_use = list_id or config.get("default_list_id")
+
+        if not list_id_to_use:
+            console.print("[red]Error: No list ID provided and no default list configured.[/red]")
+            console.print("Use --list-id or set a default with 'clickup config set default_list_id <id>'")
+            raise typer.Exit(1)
+
         try:
             async with await get_client() as client:
                 with Progress(
@@ -64,7 +67,7 @@ def export_tasks(
                     if not include_completed:
                         filters["include_closed"] = False
 
-                    tasks = await client.get_tasks(list_id, **filters)
+                    tasks = await client.get_tasks(list_id_to_use, **filters)
                     progress.update(task_id, description=f"Exporting {len(tasks)} tasks...")
 
                     if format.lower() == "csv":
@@ -143,13 +146,21 @@ def export_tasks(
 @app.command("import-tasks")
 def import_tasks(
     input_file: str = typer.Argument(..., help="Input file path (CSV or JSON)"),
-    list_id: str = typer.Option(..., "--list-id", "-l", help="List ID to import tasks into"),
+    list_id: str | None = typer.Option(None, "--list-id", "-l", help="List ID to import tasks into"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Preview import without creating tasks"),
     batch_size: int = typer.Option(10, "--batch-size", help="Number of tasks to create in parallel"),
 ):
     """Import tasks from CSV or JSON file."""
 
     async def _import_tasks():
+        config = Config()
+        list_id_to_use = list_id or config.get("default_list_id")
+
+        if not list_id_to_use:
+            console.print("[red]Error: No list ID provided and no default list configured.[/red]")
+            console.print("Use --list-id or set a default with 'clickup config set default_list_id <id>'")
+            raise typer.Exit(1)
+
         try:
             file_path = Path(input_file)
             if not file_path.exists():
@@ -200,7 +211,7 @@ def import_tasks(
                 return
 
             # Confirm import
-            if not typer.confirm(f"Import {len(tasks_data)} tasks into list {list_id}?"):
+            if not typer.confirm(f"Import {len(tasks_data)} tasks into list {list_id_to_use}?"):
                 console.print("Import cancelled.")
                 return
 
@@ -237,7 +248,7 @@ def import_tasks(
                                     create_data["due_date"] = task_data["due_date"]
 
                                 # Create task
-                                await client.create_task(list_id, **create_data)
+                                await client.create_task(list_id_to_use, **create_data)
                                 created_count += 1
 
                             except Exception as e:
@@ -264,7 +275,7 @@ def import_tasks(
 
 @app.command("bulk-update")
 def bulk_update(
-    list_id: str = typer.Argument(..., help="List ID to update tasks in"),
+    list_id: str | None = typer.Option(None, "--list-id", help="List ID to update tasks in"),
     filter_status: str | None = typer.Option(None, "--filter-status", help="Only update tasks with this status"),
     new_status: str | None = typer.Option(None, "--status", help="New status to set"),
     new_priority: int | None = typer.Option(None, "--priority", help="New priority to set (1-4)"),
@@ -274,6 +285,14 @@ def bulk_update(
     """Bulk update tasks matching criteria."""
 
     async def _bulk_update():
+        config = Config()
+        list_id_to_use = list_id or config.get("default_list_id")
+
+        if not list_id_to_use:
+            console.print("[red]Error: No list ID provided and no default list configured.[/red]")
+            console.print("Use --list-id or set a default with 'clickup config set default_list_id <id>'")
+            raise typer.Exit(1)
+
         if not any([new_status, new_priority, new_assignee]):
             console.print("[red]Error: Must specify at least one update (--status, --priority, or --assignee)[/red]")
             raise typer.Exit(1)
@@ -293,7 +312,7 @@ def bulk_update(
                     if filter_status:
                         filters["statuses"] = [filter_status]
 
-                    tasks = await client.get_tasks(list_id, **filters)
+                    tasks = await client.get_tasks(list_id_to_use, **filters)
                     progress.update(fetch_task, description=f"Found {len(tasks)} tasks")
 
                     if not tasks:

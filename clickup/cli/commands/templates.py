@@ -1,6 +1,5 @@
 """Template management commands."""
 
-import asyncio
 import json
 from pathlib import Path
 from typing import Any
@@ -12,14 +11,10 @@ from rich.prompt import Prompt
 from rich.table import Table
 
 from ...core import ClickUpClient, ClickUpError, Config
+from ..utils import run_async
 
 app = typer.Typer(help="Template management")
 console = Console()
-
-
-def run_async(coro):
-    """Helper to run async functions in sync context."""
-    return asyncio.run(coro)
 
 
 async def get_client() -> ClickUpClient:
@@ -210,7 +205,11 @@ As a {user_type}, I want {want} so that {benefit}.
 
 
 @app.command("list")
-def list_templates():
+def list_templates(
+    include_custom: bool = typer.Option(
+        False, "--include-custom", help="Include custom templates from ~/.config/clickup/templates."
+    ),
+):
     """List all available templates."""
     built_in = load_built_in_templates()
     templates_dir = get_templates_dir()
@@ -225,13 +224,14 @@ def list_templates():
         table.add_row(name, "Built-in", str(len(template.get("variables", []))))
 
     # Custom templates
-    for template_file in templates_dir.glob("*.json"):
-        try:
-            with open(template_file, encoding="utf-8") as f:
-                template = json.load(f)
-            table.add_row(template_file.stem, "Custom", str(len(template.get("variables", []))))
-        except Exception:
-            continue
+    if templates_dir.exists():
+        for template_file in templates_dir.glob("*.json"):
+            try:
+                with open(template_file, encoding="utf-8") as f:
+                    template = json.load(f)
+                table.add_row(template_file.stem, "Custom", str(len(template.get("variables", []))))
+            except Exception:
+                continue
 
     console.print(table)
 
@@ -279,29 +279,61 @@ def show_template(name: str = typer.Argument(..., help="Template name")):
     console.print(template.get("description", ""))
 
 
+# Define options as module-level constants to avoid B008 error
+_VARIABLES_FILE_OPTION = typer.Option(None, "--variables", help="JSON file with variable values")
+_TEMPLATE_FILE_OPTION = typer.Option(None, "--template-file", help="Custom template file")
+_VAR_OPTION = typer.Option(None, "--var", help="Variable assignment (key=value)")
+
+
 @app.command("create")
 def create_from_template(
-    template_name: str = typer.Argument(..., help="Template name"),
-    list_id: str = typer.Option(..., "--list-id", "-l", help="List ID to create task in"),
+    template_name: str | None = typer.Option(None, "--template", "-t", help="Template name"),
+    list_id: str | None = typer.Option(None, "--list-id", "-l", help="List ID to create task in"),
     interactive: bool = typer.Option(True, "--interactive/--no-interactive", help="Interactive mode for variables"),
-    variables_file: str | None = typer.Option(None, "--variables", help="JSON file with variable values"),
+    variables_file: str | None = _VARIABLES_FILE_OPTION,
+    template_file: str | None = _TEMPLATE_FILE_OPTION,
+    var: list[str] | None = _VAR_OPTION,
 ):
     """Create a task from a template."""
 
     async def _create_from_template():
+        nonlocal var
+        if var is None:
+            var = []
+        config = Config()
+        list_id_to_use = list_id or config.get("default_list_id")
+
+        if not list_id_to_use:
+            console.print("[red]Error: No list ID provided and no default list configured.[/red]")
+            console.print("Use --list-id or set a default with 'clickup config set default_list_id <id>'")
+            raise typer.Exit(1)
+
+        if not template_name and not template_file:
+            console.print("[red]Error: Either template name or template file is required.[/red]")
+            console.print("Use --template for built-in templates or --template-file for custom templates")
+            raise typer.Exit(1)
+
         built_in = load_built_in_templates()
         templates_dir = get_templates_dir()
 
         template = None
 
         # Load template
-        if template_name in built_in:
+        if template_file:
+            # Load from custom template file
+            try:
+                with open(template_file, encoding="utf-8") as f:
+                    template = json.load(f)
+            except (FileNotFoundError, json.JSONDecodeError) as e:
+                console.print(f"[red]Error loading template file: {e}[/red]")
+                raise typer.Exit(1) from e
+        elif template_name in built_in:
             template = built_in[template_name]
         else:
-            template_file = templates_dir / f"{template_name}.json"
-            if template_file.exists():
+            template_file_path = templates_dir / f"{template_name}.json"
+            if template_file_path.exists():
                 try:
-                    with open(template_file, encoding="utf-8") as f:
+                    with open(template_file_path, encoding="utf-8") as f:
                         template = json.load(f)
                 except Exception as e:
                     console.print(f"[red]Error loading template: {e}[/red]")
@@ -314,23 +346,32 @@ def create_from_template(
         # Get variable values
         variables = {}
 
+        # Process --var options first
+        for var_assignment in var:
+            if "=" not in var_assignment:
+                console.print(f"[red]Invalid variable format: {var_assignment}. Use key=value[/red]")
+                raise typer.Exit(1)
+            key, value = var_assignment.split("=", 1)
+            variables[key.strip()] = value.strip()
+
         if variables_file:
-            # Load from file
+            # Load from file (will override --var values)
             try:
                 with open(variables_file, encoding="utf-8") as f:
-                    variables = json.load(f)
+                    file_variables = json.load(f)
+                    variables.update(file_variables)
             except Exception as e:
                 console.print(f"[red]Error loading variables file: {e}[/red]")
                 raise typer.Exit(1) from e
-        elif interactive:
+        elif interactive and not var:
             # Interactive mode
             console.print(f"[bold]Creating task from template: {template_name}[/bold]")
             console.print("Enter values for template variables (press Enter for empty):\n")
 
-            for var in template.get("variables", []):
-                value = Prompt.ask(f"[cyan]{var}[/cyan]", default="")
+            for var_name in template.get("variables", []):
+                value = Prompt.ask(f"[cyan]{var_name}[/cyan]", default="")
                 if value:
-                    variables[var] = value
+                    variables[var_name] = value
 
         # Fill template
         name = template.get("name", "").format(**variables)
@@ -349,7 +390,7 @@ def create_from_template(
 
                     task_data = {"name": name, "description": description, "priority": priority}
 
-                    task = await client.create_task(list_id, **task_data)
+                    task = await client.create_task(list_id_to_use, **task_data)
 
                 console.print(f"✅ Created task from template: {task.name}")
                 console.print(f"🆔 Task ID: {task.id}")
