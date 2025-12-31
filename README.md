@@ -1,4 +1,4 @@
-# ClickUp Toolkit
+# ClickUp Toolkit ![Codecov](https://codecov.io/gh/EvanOman/clickup-tools/branch/master/graph/badge.svg)
 
 A CLI for ClickUp task management, built with Python.
 
