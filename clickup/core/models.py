@@ -6,7 +6,7 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class TaskStatus(str, Enum):
+class TaskStatusEnum(str, Enum):
     """Task status enumeration."""
 
     OPEN = "open"
@@ -15,13 +15,133 @@ class TaskStatus(str, Enum):
     CLOSED = "closed"
 
 
-class Priority(str, Enum):
+class PriorityEnum(str, Enum):
     """Task priority enumeration."""
 
     URGENT = "1"
     HIGH = "2"
     NORMAL = "3"
     LOW = "4"
+
+
+class StatusInfo(BaseModel):
+    """Task status information from the API."""
+
+    model_config = ConfigDict(extra="allow")
+
+    status: str
+    color: str | None = None
+    type: str | None = None
+    orderindex: int | None = None
+
+
+class PriorityInfo(BaseModel):
+    """Task priority information from the API."""
+
+    model_config = ConfigDict(extra="allow")
+
+    id: str | None = None
+    priority: str | None = None
+    color: str | None = None
+    orderindex: str | None = None
+
+
+class Tag(BaseModel):
+    """Task tag model."""
+
+    model_config = ConfigDict(extra="allow")
+
+    name: str
+    tag_fg: str | None = None
+    tag_bg: str | None = None
+    creator: int | None = None
+
+
+class ChecklistItem(BaseModel):
+    """Checklist item model."""
+
+    model_config = ConfigDict(extra="allow")
+
+    id: str
+    name: str
+    orderindex: int | None = None
+    assignee: "Assignee | None" = None
+    group_assignee: str | None = None
+    resolved: bool = False
+    parent: str | None = None
+    date_created: str | None = None
+    children: list["ChecklistItem"] = Field(default_factory=list)
+
+
+class Checklist(BaseModel):
+    """Task checklist model."""
+
+    model_config = ConfigDict(extra="allow")
+
+    id: str
+    task_id: str | None = None
+    name: str
+    date_created: str | None = None
+    orderindex: int | None = None
+    creator: int | None = None
+    resolved: int = 0
+    unresolved: int = 0
+    items: list[ChecklistItem] = Field(default_factory=list)
+
+
+class Dependency(BaseModel):
+    """Task dependency model."""
+
+    model_config = ConfigDict(extra="allow")
+
+    task_id: str
+    depends_on: str
+    type: int | None = None
+    date_created: str | None = None
+    userid: str | None = None
+    workspace_id: str | None = None
+
+
+class LinkedTask(BaseModel):
+    """Linked task reference model."""
+
+    model_config = ConfigDict(extra="allow")
+
+    task_id: str
+    link_id: str
+    date_created: str | None = None
+    userid: str | None = None
+    workspace_id: str | None = None
+
+
+class SpaceRef(BaseModel):
+    """Reference to a space (used in nested contexts)."""
+
+    model_config = ConfigDict(extra="allow")
+
+    id: str
+    name: str | None = None
+
+
+class FolderRef(BaseModel):
+    """Reference to a folder (used in nested contexts)."""
+
+    model_config = ConfigDict(extra="allow")
+
+    id: str
+    name: str | None = None
+    hidden: bool | None = None
+    access: bool | None = None
+
+
+class ListRef(BaseModel):
+    """Reference to a list (used in nested contexts)."""
+
+    model_config = ConfigDict(extra="allow")
+
+    id: str
+    name: str | None = None
+    access: bool | None = None
 
 
 class CustomField(BaseModel):
@@ -68,14 +188,14 @@ class List(BaseModel):
     name: str
     orderindex: int | None = None
     content: str | None = None
-    status: dict[str, Any] | None = None
-    priority: dict[str, Any] | None = None
+    status: StatusInfo | None = None
+    priority: PriorityInfo | None = None
     assignee: User | None = None
     task_count: int | None = None
     due_date: str | None = None
     start_date: str | None = None
-    folder: dict[str, Any] | None = None
-    space: dict[str, Any] | None = None
+    folder: FolderRef | None = None
+    space: SpaceRef | None = None
     archived: bool = False
 
 
@@ -89,7 +209,7 @@ class Folder(BaseModel):
     orderindex: int
     override_statuses: bool
     hidden: bool
-    space: dict[str, Any]
+    space: SpaceRef
     task_count: str
     archived: bool = False
     lists: list["List"] = Field(default_factory=list)
@@ -103,9 +223,9 @@ class Space(BaseModel):
     id: str
     name: str
     private: bool
-    statuses: list[dict[str, Any]] = Field(default_factory=list)
+    statuses: list[StatusInfo] = Field(default_factory=list)
     multiple_assignees: bool
-    features: dict[str, Any] = Field(default_factory=dict)
+    features: dict[str, Any] = Field(default_factory=dict)  # Dynamic feature flags
     archived: bool = False
 
 
@@ -138,7 +258,7 @@ class Task(BaseModel):
     name: str
     text_content: str | None = None
     description: str | None = None
-    status: dict[str, Any] | None = None
+    status: StatusInfo | None = None
     orderindex: str | None = None
     date_created: str | None = None
     date_updated: str | None = None
@@ -148,25 +268,25 @@ class Task(BaseModel):
     creator: User | None = None
     assignees: list[Assignee] = Field(default_factory=list)
     watchers: list[User] = Field(default_factory=list)
-    checklists: list[dict[str, Any]] = Field(default_factory=list)
-    tags: list[dict[str, Any]] = Field(default_factory=list)
+    checklists: list[Checklist] = Field(default_factory=list)
+    tags: list[Tag] = Field(default_factory=list)
     parent: str | None = None
-    priority: dict[str, Any] | None = None
+    priority: PriorityInfo | None = None
     due_date: str | None = None
     start_date: str | None = None
     points: int | None = None
     time_estimate: int | None = None
     time_spent: int | None = None
     custom_fields: list[CustomField] = Field(default_factory=list)
-    dependencies: list[dict[str, Any]] = Field(default_factory=list)
-    linked_tasks: list[dict[str, Any]] = Field(default_factory=list)
+    dependencies: list[Dependency] = Field(default_factory=list)
+    linked_tasks: list[LinkedTask] = Field(default_factory=list)
     team_id: str | None = None
     url: str | None = None
     permission_level: str | None = None
-    list: dict[str, Any] | None = None
-    project: dict[str, Any] | None = None
-    folder: dict[str, Any] | None = None
-    space: dict[str, Any] | None = None
+    list: ListRef | None = None
+    project: dict[str, Any] | None = None  # Project structure varies
+    folder: FolderRef | None = None
+    space: SpaceRef | None = None
 
 
 class Workspace(BaseModel):

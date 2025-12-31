@@ -147,6 +147,7 @@ class TestCLITask:
 
         if not list_id:
             pytest.skip("No list ID found for task creation test")
+            raise RuntimeError("unreachable")  # Help type checker understand pytest.skip raises
 
         # Create a task
         task_name = "CLI Integration Test Task"

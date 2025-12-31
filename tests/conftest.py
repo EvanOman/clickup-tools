@@ -8,6 +8,7 @@ import pytest
 
 from clickup.core import ClickUpClient, Config, Space, Task, Team, User
 from clickup.core import List as ClickUpList
+from clickup.core.models import PriorityInfo, StatusInfo
 
 
 @pytest.fixture
@@ -37,8 +38,8 @@ def sample_task():
         id="task123",
         name="Test Task",
         description="This is a test task",
-        status={"status": "open"},
-        priority={"priority": "3"},
+        status=StatusInfo(status="open"),
+        priority=PriorityInfo(priority="3"),
         assignees=[],
         date_created="2024-01-01T00:00:00Z",
         date_updated="2024-01-01T00:00:00Z",
