@@ -3,6 +3,7 @@
 import csv
 import json
 from pathlib import Path
+from typing import Any
 
 import typer
 from rich.console import Console
@@ -40,10 +41,10 @@ def export_tasks(
     output_file: str = typer.Option("tasks.csv", "--output", "-o", help="Output file path"),
     format: str = typer.Option("csv", "--format", "-f", help="Output format (csv, json)"),
     include_completed: bool = typer.Option(True, "--include-completed", help="Include completed tasks"),
-):
+) -> None:
     """Export tasks to CSV or JSON file."""
 
-    async def _export_tasks():
+    async def _export_tasks() -> None:
         config = Config()
         list_id_to_use = list_id or config.get("default_list_id")
 
@@ -149,10 +150,10 @@ def import_tasks(
     list_id: str | None = typer.Option(None, "--list-id", "-l", help="List ID to import tasks into"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Preview import without creating tasks"),
     batch_size: int = typer.Option(10, "--batch-size", help="Number of tasks to create in parallel"),
-):
+) -> None:
     """Import tasks from CSV or JSON file."""
 
-    async def _import_tasks():
+    async def _import_tasks() -> None:
         config = Config()
         list_id_to_use = list_id or config.get("default_list_id")
 
@@ -235,7 +236,7 @@ def import_tasks(
                         for task_data in batch:
                             try:
                                 # Prepare task creation data
-                                create_data = {"name": task_data.get("name", "Untitled Task")}
+                                create_data: dict[str, Any] = {"name": task_data.get("name", "Untitled Task")}
 
                                 if task_data.get("description"):
                                     create_data["description"] = task_data["description"]
@@ -281,10 +282,10 @@ def bulk_update(
     new_priority: int | None = typer.Option(None, "--priority", help="New priority to set (1-4)"),
     new_assignee: str | None = typer.Option(None, "--assignee", help="New assignee user ID"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Preview changes without applying"),
-):
+) -> None:
     """Bulk update tasks matching criteria."""
 
-    async def _bulk_update():
+    async def _bulk_update() -> None:
         config = Config()
         list_id_to_use = list_id or config.get("default_list_id")
 
@@ -327,7 +328,7 @@ def bulk_update(
                     table.add_column("Current Priority", style="yellow")
                     table.add_column("New Priority", style="yellow")
 
-                    updates = {}
+                    updates: dict[str, Any] = {}
                     if new_status:
                         updates["status"] = new_status
                     if new_priority:

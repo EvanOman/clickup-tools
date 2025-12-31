@@ -1,8 +1,8 @@
-"""ClickUp Toolkit - A powerful CLI and MCP interface for ClickUp task management."""
+"""ClickUp Toolkit - A powerful CLI for ClickUp task management."""
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 # Import main modules
-from . import cli, core, mcp
+from . import cli, core
 
-__all__ = ["core", "cli", "mcp"]
+__all__ = ["core", "cli"]

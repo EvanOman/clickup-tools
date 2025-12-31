@@ -9,7 +9,7 @@ from pydantic import BaseModel
 
 # Optional .env file loading
 try:
-    from dotenv import load_dotenv
+    from dotenv import load_dotenv  # type: ignore[import-not-found]
 
     load_dotenv()
 except ImportError:

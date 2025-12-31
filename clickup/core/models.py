@@ -45,6 +45,7 @@ class User(BaseModel):
     email: str
     color: str | None = None
     profilePicture: str | None = None
+    role: str | None = None
 
 
 class Assignee(BaseModel):

@@ -12,7 +12,7 @@ console = Console()
 
 
 @app.command("set-client-id")
-def set_client_id(client_id: str = typer.Argument(..., help="ClickUp Client ID")):
+def set_client_id(client_id: str = typer.Argument(..., help="ClickUp Client ID")) -> None:
     """Set your ClickUp Client ID."""
     config = Config()
     config.set_client_id(client_id)
@@ -20,7 +20,7 @@ def set_client_id(client_id: str = typer.Argument(..., help="ClickUp Client ID")
 
 
 @app.command("set-client-secret")
-def set_client_secret(client_secret: str = typer.Argument(..., help="ClickUp Client Secret")):
+def set_client_secret(client_secret: str = typer.Argument(..., help="ClickUp Client Secret")) -> None:
     """Set your ClickUp Client Secret."""
     config = Config()
     config.set_client_secret(client_secret)
@@ -28,7 +28,7 @@ def set_client_secret(client_secret: str = typer.Argument(..., help="ClickUp Cli
 
 
 @app.command("set-token")
-def set_api_token(api_token: str = typer.Argument(..., help="ClickUp API Token")):
+def set_api_token(api_token: str = typer.Argument(..., help="ClickUp API Token")) -> None:
     """Set your ClickUp API Token."""
     config = Config()
     config.set_api_token(api_token)
@@ -39,7 +39,7 @@ def set_api_token(api_token: str = typer.Argument(..., help="ClickUp API Token")
 def set_config(
     key: str = typer.Argument(..., help="Configuration key"),
     value: str = typer.Argument(..., help="Configuration value"),
-):
+) -> None:
     """Set a configuration value."""
     config = Config()
     try:
@@ -51,7 +51,7 @@ def set_config(
 
 
 @app.command("get")
-def get_config(key: str = typer.Argument(..., help="Configuration key")):
+def get_config(key: str = typer.Argument(..., help="Configuration key")) -> None:
     """Get a configuration value."""
     config = Config()
     value = config.get(key)
@@ -62,7 +62,7 @@ def get_config(key: str = typer.Argument(..., help="Configuration key")):
 
 
 @app.command("show")
-def show_config():
+def show_config() -> None:
     """Show all configuration values."""
     config = Config()
 
@@ -70,18 +70,19 @@ def show_config():
     table.add_column("Key", style="cyan")
     table.add_column("Value", style="green")
 
-    for key, value in config.config.model_dump(exclude_none=True).items():
-        if key in ("client_secret", "api_token") and value:
-            value = "***"
-        elif key == "client_id" and value:
-            value = f"{value[:8]}...{value[-4:]}" if len(value) > 12 else "***"
-        table.add_row(key, str(value))
+    for key, config_value in config.config.model_dump(exclude_none=True).items():
+        display_value = config_value
+        if key in ("client_secret", "api_token") and config_value:
+            display_value = "***"
+        elif key == "client_id" and config_value:
+            display_value = f"{config_value[:8]}...{config_value[-4:]}" if len(config_value) > 12 else "***"
+        table.add_row(key, str(display_value))
 
     console.print(table)
 
 
 @app.command("reset")
-def reset_config():
+def reset_config() -> None:
     """Reset configuration to defaults."""
     if typer.confirm("Are you sure you want to reset all configuration?"):
         config = Config()
@@ -90,10 +91,10 @@ def reset_config():
 
 
 @app.command("validate")
-def validate_auth():
+def validate_auth() -> None:
     """Validate API credentials by checking user info."""
 
-    async def _validate():
+    async def _validate() -> None:
         config = Config()
         if not config.has_credentials():
             console.print("[red]❌ No API credentials configured[/red]")

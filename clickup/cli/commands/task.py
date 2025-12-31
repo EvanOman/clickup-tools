@@ -1,5 +1,7 @@
 """Task management commands."""
 
+from typing import Any
+
 import typer
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
@@ -51,10 +53,10 @@ def list_tasks(
     status: str | None = typer.Option(None, "--status", "-s", help="Filter by status"),
     assignee: str | None = typer.Option(None, "--assignee", "-a", help="Filter by assignee"),
     limit: int = typer.Option(50, "--limit", help="Maximum number of tasks to show"),
-):
+) -> None:
     """List tasks from a ClickUp list."""
 
-    async def _list_tasks():
+    async def _list_tasks() -> None:
         config = Config()
         list_id_to_use = list_id or config.get("default_list_id")
 
@@ -97,10 +99,10 @@ def list_tasks(
 
 
 @app.command("get")
-def get_task(task_id: str = typer.Argument(..., help="Task ID")):
+def get_task(task_id: str = typer.Argument(..., help="Task ID")) -> None:
     """Get detailed information about a specific task."""
 
-    async def _get_task():
+    async def _get_task() -> None:
         try:
             async with await get_client() as client:
                 with Progress(
@@ -146,10 +148,10 @@ def create_task(
     priority: int | None = typer.Option(None, "--priority", "-p", help="Priority (1=urgent, 4=low)"),
     assignee: str | None = typer.Option(None, "--assignee", "-a", help="Assignee user ID"),
     due_date: str | None = typer.Option(None, "--due-date", help="Due date (YYYY-MM-DD)"),
-):
+) -> None:
     """Create a new task."""
 
-    async def _create_task():
+    async def _create_task() -> None:
         config = Config()
         list_id_to_use = list_id or config.get("default_list_id")
 
@@ -159,7 +161,7 @@ def create_task(
             raise typer.Exit(1)
 
         try:
-            task_data = {"name": name}
+            task_data: dict[str, Any] = {"name": name}
 
             if description:
                 task_data["description"] = description
@@ -198,11 +200,11 @@ def update_task(
     description: str | None = typer.Option(None, "--description", "-d", help="New description"),
     status: str | None = typer.Option(None, "--status", "-s", help="New status"),
     priority: int | None = typer.Option(None, "--priority", "-p", help="New priority (1-4)"),
-):
+) -> None:
     """Update an existing task."""
 
-    async def _update_task():
-        updates = {}
+    async def _update_task() -> None:
+        updates: dict[str, Any] = {}
         if name:
             updates["name"] = name
         if description:
@@ -239,10 +241,10 @@ def update_task(
 def change_status(
     task_id: str | None = typer.Option(None, "--task-id", "-t", help="Task ID"),
     status: str | None = typer.Option(None, "--status", "-s", help="New status"),
-):
+) -> None:
     """Change task status."""
 
-    async def _change_status():
+    async def _change_status() -> None:
         if not task_id:
             console.print("[red]Error: Task ID is required.[/red]")
             console.print("Use --task-id to specify the task")
@@ -276,10 +278,10 @@ def change_status(
 def delete_task(
     task_id: str = typer.Argument(..., help="Task ID"),
     force: bool = typer.Option(False, "--force", "-f", help="Skip confirmation"),
-):
+) -> None:
     """Delete a task."""
 
-    async def _delete_task():
+    async def _delete_task() -> None:
         if not force:
             if not typer.confirm(f"Are you sure you want to delete task {task_id}?"):
                 console.print("Cancelled.")
@@ -309,10 +311,10 @@ def search_tasks(
     query: str | None = typer.Option(None, "--query", "-q", help="Search query"),
     workspace_id: str | None = typer.Option(None, "--workspace-id", "-w", help="Workspace ID to search in"),
     team_id: str | None = typer.Option(None, "--team-id", "-t", help="Team ID (alias for workspace-id)"),
-):
+) -> None:
     """Search for tasks across the workspace."""
 
-    async def _search_tasks():
+    async def _search_tasks() -> None:
         if not query:
             console.print("[red]Error: Search query is required.[/red]")
             console.print("Use --query to specify the search terms")
@@ -371,10 +373,10 @@ def export_tasks(
     output_file: str = typer.Option("tasks.json", "--output", "-o", help="Output file path"),
     format: str = typer.Option("json", "--format", "-f", help="Output format (json, csv)"),
     include_completed: bool = typer.Option(True, "--include-completed", help="Include completed tasks"),
-):
+) -> None:
     """Export tasks from a list to a file."""
 
-    async def _export_tasks():
+    async def _export_tasks() -> None:
         config = Config()
         list_id_to_use = list_id or config.get("default_list_id")
 

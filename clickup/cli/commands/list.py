@@ -1,5 +1,7 @@
 """List management commands."""
 
+from typing import Any
+
 import typer
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
@@ -28,10 +30,10 @@ async def get_client() -> ClickUpClient:
 def list_lists(
     folder_id: str | None = typer.Option(None, "--folder-id", "-f", help="Folder ID"),
     space_id: str | None = typer.Option(None, "--space-id", "-s", help="Space ID (for folderless lists)"),
-):
+) -> None:
     """List all lists in a folder or space."""
 
-    async def _list_lists():
+    async def _list_lists() -> None:
         if not folder_id and not space_id:
             console.print("[red]Error: Either folder ID or space ID is required.[/red]")
             console.print("Use --folder-id for lists in a folder or --space-id for folderless lists")
@@ -48,6 +50,8 @@ def list_lists(
                     if folder_id:
                         lists = await client.get_lists(folder_id)
                     else:
+                        # space_id is guaranteed non-None here due to the check above
+                        assert space_id is not None
                         lists = await client.get_folderless_lists(space_id)
 
                 if not lists:
@@ -80,10 +84,10 @@ def list_lists(
 
 
 @app.command("get")
-def get_list(list_id: str | None = typer.Option(None, "--list-id", "-l", help="List ID")):
+def get_list(list_id: str | None = typer.Option(None, "--list-id", "-l", help="List ID")) -> None:
     """Get detailed information about a specific list."""
 
-    async def _get_list():
+    async def _get_list() -> None:
         config = Config()
         list_id_to_use = list_id or config.get("default_list_id")
 
@@ -143,17 +147,17 @@ def create_list(
     due_date: str | None = typer.Option(None, "--due-date", help="Due date (YYYY-MM-DD)"),
     priority: int | None = typer.Option(None, "--priority", help="Priority (1-4)"),
     assignee: str | None = typer.Option(None, "--assignee", help="Assignee user ID"),
-):
+) -> None:
     """Create a new list."""
 
-    async def _create_list():
+    async def _create_list() -> None:
         if not folder_id and not space_id:
             console.print("[red]Error: Either folder ID or space ID is required.[/red]")
             console.print("Use --folder-id to create list in a folder or --space-id for folderless list")
             raise typer.Exit(1)
 
         try:
-            list_data = {"name": name}
+            list_data: dict[str, Any] = {"name": name}
 
             if content:
                 list_data["content"] = content
@@ -174,6 +178,8 @@ def create_list(
                     if folder_id:
                         list_item = await client.create_list(folder_id, **list_data)
                     else:
+                        # space_id is guaranteed non-None here due to the check above
+                        assert space_id is not None
                         list_item = await client.create_folderless_list(space_id, **list_data)
 
                 console.print(f"✅ Created list: {list_item.name} (ID: {list_item.id})")

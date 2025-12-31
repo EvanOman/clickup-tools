@@ -30,10 +30,10 @@ console = Console()
 
 
 @app.command()
-def status():
+def status() -> None:
     """Show ClickUp connection status and current configuration."""
 
-    async def _status():
+    async def _status() -> None:
         config_manager = Config()
 
         table = Table(title="ClickUp Status", show_header=True)
@@ -55,11 +55,13 @@ def status():
         else:
             table.add_row("Client Secret", "[red]Not configured[/red]")
 
-        table.add_row("Base URL", config_manager.get("base_url"))
+        base_url = config_manager.get("base_url") or "N/A"
+        table.add_row("Base URL", base_url)
         table.add_row("Default Team", config_manager.get("default_team_id") or "[dim]None[/dim]")
         table.add_row("Default Space", config_manager.get("default_space_id") or "[dim]None[/dim]")
         table.add_row("Default List", config_manager.get("default_list_id") or "[dim]None[/dim]")
-        table.add_row("Output Format", config_manager.get("output_format"))
+        output_format = config_manager.get("output_format") or "json"
+        table.add_row("Output Format", output_format)
 
         # Test authentication if credentials are available
         if client_id and client_secret:
@@ -92,19 +94,19 @@ def status():
 
 
 @app.command()
-def version():
+def version() -> None:
     """Show version information."""
     from . import __version__
 
     console.print(f"ClickUp Toolkit CLI v{__version__}")
 
 
-async def async_main():
+async def async_main() -> None:
     """Async wrapper for CLI commands that need async support."""
     app()
 
 
-def main():
+def main() -> None:
     """Main entry point for the CLI."""
     try:
         app()
