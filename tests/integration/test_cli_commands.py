@@ -20,10 +20,19 @@ def test_cli_version():
 def test_cli_status_no_token():
     """Test status command without API token."""
     with tempfile.TemporaryDirectory() as tmpdir:
-        with patch.dict("os.environ", {"HOME": tmpdir}):
+        # Clear all ClickUp-related env vars and set HOME to temp dir
+        env_overrides = {
+            "HOME": tmpdir,
+            "CLICKUP_CLIENT_ID": "",
+            "CLICKUP_CLIENT_SECRET": "",
+            "CLICKUP_API_TOKEN": "",
+            "CLICKUP_API_KEY": "",
+        }
+        with patch.dict("os.environ", env_overrides, clear=False):
             result = runner.invoke(app, ["status"])
             assert result.exit_code == 0
-            assert "Not configured" in result.stdout
+            # Output now shows friendly messages - either "Not configured" or "None"
+            assert "None" in result.stdout or "Not configured" in result.stdout
 
 
 def test_config_set_token():

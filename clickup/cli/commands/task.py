@@ -18,10 +18,8 @@ async def get_client() -> ClickUpClient:
     """Get configured ClickUp client."""
     config = Config()
     if not config.has_credentials():
-        console.print(
-            "[red]Error: No client credentials configured. Set CLICKUP_CLIENT_ID and "
-            "CLICKUP_CLIENT_SECRET environment variables.[/red]"
-        )
+        console.print("[red]Error: No API credentials configured.[/red]")
+        console.print("Run 'clickup setup wizard' to configure your credentials.")
         raise typer.Exit(1)
     return ClickUpClient(config, console)
 
@@ -61,8 +59,8 @@ def list_tasks(
         list_id_to_use = list_id or config.get("default_list_id")
 
         if not list_id_to_use:
-            console.print("[red]Error: No list ID provided and no default list configured.[/red]")
-            console.print("Use --list-id or set a default with 'clickup config set default_list_id <id>'")
+            console.print("[red]Error: No default list configured.[/red]")
+            console.print("Run 'clickup config switch-list' to select a default list.")
             raise typer.Exit(1)
 
         try:
@@ -156,8 +154,8 @@ def create_task(
         list_id_to_use = list_id or config.get("default_list_id")
 
         if not list_id_to_use:
-            console.print("[red]Error: No list ID provided and no default list configured.[/red]")
-            console.print("Use --list-id or set a default with 'clickup config set default_list_id <id>'")
+            console.print("[red]Error: No default list configured.[/red]")
+            console.print("Run 'clickup config switch-list' to select a default list.")
             raise typer.Exit(1)
 
         try:
@@ -320,11 +318,12 @@ def search_tasks(
             console.print("Use --query to specify the search terms")
             raise typer.Exit(1)
 
-        # Use either workspace_id or team_id (they're the same thing)
-        id_to_use = workspace_id or team_id
+        # Use either workspace_id, team_id, or default from config
+        config = Config()
+        id_to_use = workspace_id or team_id or config.get("default_team_id")
         if not id_to_use:
-            console.print("[red]Error: Workspace ID is required for search.[/red]")
-            console.print("Use --workspace-id or --team-id to specify the workspace")
+            console.print("[red]Error: No default workspace configured.[/red]")
+            console.print("Run 'clickup setup wizard' to configure your defaults.")
             raise typer.Exit(1)
 
         try:
@@ -381,8 +380,8 @@ def export_tasks(
         list_id_to_use = list_id or config.get("default_list_id")
 
         if not list_id_to_use:
-            console.print("[red]Error: No list ID provided and no default list configured.[/red]")
-            console.print("Use --list-id or set a default with 'clickup config set default_list_id <id>'")
+            console.print("[red]Error: No default list configured.[/red]")
+            console.print("Run 'clickup config switch-list' to select a default list.")
             raise typer.Exit(1)
 
         try:

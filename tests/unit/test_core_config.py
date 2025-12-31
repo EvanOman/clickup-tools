@@ -46,8 +46,16 @@ def test_config_headers(temp_config_dir):
     assert headers["Content-Type"] == "application/json"
 
 
-def test_config_headers_no_token(temp_config_dir):
+def test_config_headers_no_token(temp_config_dir, monkeypatch):
     """Test headers generation without token."""
+    # Clear environment variables that might provide credentials
+    monkeypatch.delenv("CLICKUP_API_TOKEN", raising=False)
+    monkeypatch.delenv("CLICKUP_API_KEY", raising=False)
+    monkeypatch.delenv("CLICKUP_CLIENT_ID", raising=False)
+    monkeypatch.delenv("CLICKUP_CLIENT_SECRET", raising=False)
+    monkeypatch.delenv("CLICKUP_TOKEN", raising=False)
+    monkeypatch.delenv("CLICKUP_ACCESS_TOKEN", raising=False)
+
     config = Config(config_path=temp_config_dir / "config.json")
 
     with pytest.raises(ValueError, match="ClickUp API token not configured"):

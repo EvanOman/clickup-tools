@@ -7,7 +7,7 @@ from rich.console import Console
 from rich.table import Table
 
 from ..core import ClickUpClient, Config
-from .commands import bulk, config, discover, task, templates, workspace
+from .commands import bulk, config, discover, setup, task, templates, workspace
 from .commands import list as list_cmd
 
 app = typer.Typer(
@@ -20,6 +20,7 @@ app = typer.Typer(
 # Add subcommands
 app.add_typer(task.app, name="task", help="Task management commands")
 app.add_typer(config.app, name="config", help="Configuration commands")
+app.add_typer(setup.app, name="setup", help="Setup wizard and configuration")
 app.add_typer(workspace.app, name="workspace", help="Workspace management commands")
 app.add_typer(list_cmd.app, name="list", help="List management commands")
 app.add_typer(bulk.app, name="bulk", help="Bulk operations and import/export")
@@ -57,9 +58,34 @@ def status() -> None:
 
         base_url = config_manager.get("base_url") or "N/A"
         table.add_row("Base URL", base_url)
-        table.add_row("Default Team", config_manager.get("default_team_id") or "[dim]None[/dim]")
-        table.add_row("Default Space", config_manager.get("default_space_id") or "[dim]None[/dim]")
-        table.add_row("Default List", config_manager.get("default_list_id") or "[dim]None[/dim]")
+
+        # Show friendly names with IDs in dim
+        workspace_name = config_manager.get("default_workspace_name")
+        workspace_id = config_manager.get("default_team_id")
+        if workspace_name and workspace_id:
+            table.add_row("Default Workspace", f"{workspace_name} [dim]({workspace_id})[/dim]")
+        elif workspace_id:
+            table.add_row("Default Workspace", f"[dim]{workspace_id}[/dim]")
+        else:
+            table.add_row("Default Workspace", "[dim]None[/dim]")
+
+        space_name = config_manager.get("default_space_name")
+        space_id = config_manager.get("default_space_id")
+        if space_name and space_id:
+            table.add_row("Default Space", f"{space_name} [dim]({space_id})[/dim]")
+        elif space_id:
+            table.add_row("Default Space", f"[dim]{space_id}[/dim]")
+        else:
+            table.add_row("Default Space", "[dim]None[/dim]")
+
+        list_name = config_manager.get("default_list_name")
+        list_id = config_manager.get("default_list_id")
+        if list_name and list_id:
+            table.add_row("Default List", f"{list_name} [dim]({list_id})[/dim]")
+        elif list_id:
+            table.add_row("Default List", f"[dim]{list_id}[/dim]")
+        else:
+            table.add_row("Default List", "[dim]None[/dim]")
         output_format = config_manager.get("output_format") or "json"
         table.add_row("Output Format", output_format)
 
@@ -80,15 +106,12 @@ def status() -> None:
         console.print(table)
 
         if not client_id or not client_secret:
-            console.print(
-                "\n[yellow]⚠️  No client credentials configured. Set CLICKUP_CLIENT_ID and "
-                "CLICKUP_CLIENT_SECRET environment variables.[/yellow]"
-            )
-            console.print("💡 Use '[bold]clickup config validate[/bold]' to test your credentials once configured.")
+            console.print("\n[yellow]⚠️  No API credentials configured.[/yellow]")
+            console.print("💡 Run '[bold]clickup setup wizard[/bold]' to get started.")
         else:
-            console.print(
-                "\n💡 Need folder or list IDs? Use '[bold]clickup discover ids[/bold]' to explore your workspace!"
-            )
+            console.print("\n💡 Run '[bold]clickup setup wizard[/bold]' to configure your defaults.")
+            console.print("   Use '[bold]clickup config switch-workspace[/bold]' to change workspace.")
+            console.print("   Use '[bold]clickup config switch-space[/bold]' to change space.")
 
     asyncio.run(_status())
 
