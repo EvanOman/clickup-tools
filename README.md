@@ -116,7 +116,7 @@ uv run ruff check
 uv run ruff format
 
 # Type check
-uv run mypy
+uv run ty check
 ```
 
 ## Available Commands
