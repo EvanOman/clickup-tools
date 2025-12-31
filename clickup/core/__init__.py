@@ -2,9 +2,9 @@
 
 __version__ = "0.1.0"
 
-from .client import ClickUpClient
-from .config import Config
-from .exceptions import (
+from clickup.core.client import ClickUpClient
+from clickup.core.config import Config
+from clickup.core.exceptions import (
     AuthenticationError,
     AuthorizationError,
     ClickUpError,
@@ -15,7 +15,7 @@ from .exceptions import (
     ServerError,
     ValidationError,
 )
-from .models import Comment, Folder, List, Space, Task, Team, User, Workspace
+from clickup.core.models import Comment, Folder, List, Space, Task, Team, User, Workspace
 
 __all__ = [
     "ClickUpClient",

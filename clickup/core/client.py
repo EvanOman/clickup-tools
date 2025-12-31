@@ -8,8 +8,8 @@ from urllib.parse import urljoin
 import httpx
 from rich.console import Console
 
-from .config import Config
-from .exceptions import (
+from clickup.core.config import Config
+from clickup.core.exceptions import (
     AuthenticationError,
     AuthorizationError,
     ClickUpError,
@@ -19,8 +19,8 @@ from .exceptions import (
     ServerError,
     ValidationError,
 )
-from .models import Comment, Folder, Space, Task, Team, User
-from .models import List as ClickUpList
+from clickup.core.models import Comment, Folder, Space, Task, Team, User
+from clickup.core.models import List as ClickUpList
 
 
 class ClickUpClient:

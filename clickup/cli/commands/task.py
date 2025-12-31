@@ -7,8 +7,8 @@ from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 
-from ...core import ClickUpClient, ClickUpError, Config, Task
-from ..utils import run_async
+from clickup.cli.utils import run_async
+from clickup.core import ClickUpClient, ClickUpError, Config, Task
 
 app = typer.Typer(help="Task management")
 console = Console()

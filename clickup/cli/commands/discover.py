@@ -6,8 +6,8 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 from rich.tree import Tree
 
-from ...core import ClickUpClient, ClickUpError, Config
-from ..utils import run_async
+from clickup.cli.utils import run_async
+from clickup.core import ClickUpClient, ClickUpError, Config
 
 app = typer.Typer(help="Discover and navigate ClickUp hierarchy")
 console = Console()

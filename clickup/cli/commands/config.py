@@ -5,8 +5,8 @@ from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 
-from ...core import ClickUpClient, ClickUpError, Config
-from ..utils import prompt_selection, run_async
+from clickup.cli.utils import prompt_selection, run_async
+from clickup.core import ClickUpClient, ClickUpError, Config
 
 app = typer.Typer(help="Configuration management")
 console = Console()

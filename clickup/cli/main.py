@@ -6,10 +6,10 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from ..core import ClickUpClient, Config
-from .commands import bulk, config, discover, setup, task, templates, workspace
-from .commands import list as list_cmd
-from .utils import format_config_value
+from clickup.cli.commands import bulk, config, discover, setup, task, templates, workspace
+from clickup.cli.commands import list as list_cmd
+from clickup.cli.utils import format_config_value
+from clickup.core import ClickUpClient, Config
 
 app = typer.Typer(
     name="clickup",
@@ -104,7 +104,7 @@ def status() -> None:
 @app.command()
 def version() -> None:
     """Show version information."""
-    from . import __version__
+    from clickup.cli import __version__
 
     console.print(f"ClickUp Toolkit CLI v{__version__}")
 
