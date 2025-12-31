@@ -1,5 +1,7 @@
 """ClickUp data models using pydantic."""
 
+from __future__ import annotations
+
 from enum import Enum
 from typing import Any
 
@@ -65,12 +67,12 @@ class ChecklistItem(BaseModel):
     id: str
     name: str
     orderindex: int | None = None
-    assignee: "Assignee | None" = None
+    assignee: Assignee | None = None
     group_assignee: str | None = None
     resolved: bool = False
     parent: str | None = None
     date_created: str | None = None
-    children: list["ChecklistItem"] = Field(default_factory=list)
+    children: list[ChecklistItem] = Field(default_factory=list)
 
 
 class Checklist(BaseModel):
@@ -212,7 +214,7 @@ class Folder(BaseModel):
     space: SpaceRef
     task_count: str
     archived: bool = False
-    lists: list["List"] = Field(default_factory=list)
+    lists: list[List] = Field(default_factory=list)
 
 
 class Space(BaseModel):
@@ -251,7 +253,7 @@ class Team(BaseModel):
 class Task(BaseModel):
     """ClickUp task model."""
 
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra="allow", populate_by_name=True)
 
     id: str
     custom_id: str | None = None
@@ -283,7 +285,7 @@ class Task(BaseModel):
     team_id: str | None = None
     url: str | None = None
     permission_level: str | None = None
-    list: ListRef | None = None
+    list_ref: ListRef | None = Field(default=None, alias="list")
     project: dict[str, Any] | None = None  # Project structure varies
     folder: FolderRef | None = None
     space: SpaceRef | None = None

@@ -36,8 +36,11 @@ class ClickUpConfig(BaseModel):
     client_secret: str | None = None
     base_url: str = "https://api.clickup.com/api/v2"
     default_team_id: str | None = None
+    default_workspace_name: str | None = None  # Friendly name for display
     default_space_id: str | None = None
+    default_space_name: str | None = None  # Friendly name for display
     default_list_id: str | None = None
+    default_list_name: str | None = None  # Friendly name for display
     timeout: int = 30
     max_retries: int = 3
     output_format: str = "table"  # table, json, csv

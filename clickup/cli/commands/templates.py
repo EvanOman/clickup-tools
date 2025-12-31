@@ -10,8 +10,8 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.prompt import Prompt
 from rich.table import Table
 
-from ...core import ClickUpClient, ClickUpError, Config
-from ..utils import run_async
+from clickup.cli.utils import run_async
+from clickup.core import ClickUpClient, ClickUpError, Config
 
 app = typer.Typer(help="Template management")
 console = Console()

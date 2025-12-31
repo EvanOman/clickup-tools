@@ -2,10 +2,11 @@
 
 import typer
 from rich.console import Console
+from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 
-from ...core import ClickUpClient, Config
-from ..utils import run_async
+from clickup.cli.utils import prompt_selection, run_async
+from clickup.core import ClickUpClient, ClickUpError, Config
 
 app = typer.Typer(help="Configuration management")
 console = Console()
@@ -129,3 +130,179 @@ def validate_auth() -> None:
             raise typer.Exit(1) from e
 
     run_async(_validate())
+
+
+@app.command("switch-workspace")
+def switch_workspace() -> None:
+    """Interactively select a different default workspace."""
+
+    async def _switch() -> None:
+        config = Config()
+        if not config.has_credentials():
+            console.print("[red]No API credentials configured.[/red]")
+            console.print("Run 'clickup setup wizard' first to configure your credentials.")
+            raise typer.Exit(1)
+
+        try:
+            async with ClickUpClient(config, console) as client:
+                with Progress(
+                    SpinnerColumn(),
+                    TextColumn("[progress.description]{task.description}"),
+                    console=console,
+                    transient=True,
+                ) as progress:
+                    progress.add_task("Fetching workspaces...", total=None)
+                    workspaces = await client.get_teams()
+
+                if not workspaces:
+                    console.print("[yellow]No workspaces found.[/yellow]")
+                    raise typer.Exit(1)
+
+                current_id = config.get("default_team_id")
+                console.print("Select a workspace:")
+                workspace_options = []
+                for w in workspaces:
+                    marker = " [green](current)[/green]" if w.id == current_id else ""
+                    workspace_options.append((w.id, f"{w.name}{marker}"))
+
+                workspace_id, _ = prompt_selection(
+                    workspace_options, f"Select workspace [1-{len(workspaces)}]", console
+                )
+                workspace = next(w for w in workspaces if w.id == workspace_id)
+
+                config.set("default_team_id", workspace.id)
+                config.set("default_workspace_name", workspace.name)
+                console.print(f"[green]Switched to workspace: {workspace.name}[/green]")
+
+        except ClickUpError as e:
+            console.print(f"[red]ClickUp API Error: {e}[/red]")
+            raise typer.Exit(1) from e
+
+    run_async(_switch())
+
+
+@app.command("switch-space")
+def switch_space() -> None:
+    """Interactively select a different default space."""
+
+    async def _switch() -> None:
+        config = Config()
+        if not config.has_credentials():
+            console.print("[red]No API credentials configured.[/red]")
+            console.print("Run 'clickup setup wizard' first to configure your credentials.")
+            raise typer.Exit(1)
+
+        workspace_id = config.get("default_team_id")
+        if not workspace_id:
+            console.print("[yellow]No default workspace configured.[/yellow]")
+            console.print("Run 'clickup setup wizard' or 'clickup config switch-workspace' first.")
+            raise typer.Exit(1)
+
+        try:
+            async with ClickUpClient(config, console) as client:
+                with Progress(
+                    SpinnerColumn(),
+                    TextColumn("[progress.description]{task.description}"),
+                    console=console,
+                    transient=True,
+                ) as progress:
+                    progress.add_task("Fetching spaces...", total=None)
+                    spaces = await client.get_spaces(workspace_id)
+
+                if not spaces:
+                    console.print("[yellow]No spaces found in this workspace.[/yellow]")
+                    raise typer.Exit(1)
+
+                current_id = config.get("default_space_id")
+                console.print("Select a space:")
+                space_options = []
+                for s in spaces:
+                    marker = " [green](current)[/green]" if s.id == current_id else ""
+                    space_options.append((s.id, f"{s.name}{marker}"))
+
+                space_id, _ = prompt_selection(space_options, f"Select space [1-{len(spaces)}]", console)
+                space = next(s for s in spaces if s.id == space_id)
+
+                config.set("default_space_id", space.id)
+                config.set("default_space_name", space.name)
+                console.print(f"[green]Switched to space: {space.name}[/green]")
+
+        except ClickUpError as e:
+            console.print(f"[red]ClickUp API Error: {e}[/red]")
+            raise typer.Exit(1) from e
+
+    run_async(_switch())
+
+
+@app.command("switch-list")
+def switch_list() -> None:
+    """Interactively select a different default list."""
+
+    async def _switch() -> None:
+        config = Config()
+        if not config.has_credentials():
+            console.print("[red]No API credentials configured.[/red]")
+            console.print("Run 'clickup setup wizard' first to configure your credentials.")
+            raise typer.Exit(1)
+
+        space_id = config.get("default_space_id")
+        if not space_id:
+            console.print("[yellow]No default space configured.[/yellow]")
+            console.print("Run 'clickup setup wizard' or 'clickup config switch-space' first.")
+            raise typer.Exit(1)
+
+        try:
+            async with ClickUpClient(config, console) as client:
+                with Progress(
+                    SpinnerColumn(),
+                    TextColumn("[progress.description]{task.description}"),
+                    console=console,
+                    transient=True,
+                ) as progress:
+                    progress.add_task("Fetching lists...", total=None)
+
+                    # Get both folderless lists and lists from folders
+                    all_lists = []
+
+                    # Get folderless lists
+                    try:
+                        folderless = await client.get_folderless_lists(space_id)
+                        all_lists.extend(folderless)
+                    except ClickUpError:
+                        pass
+
+                    # Get folders and their lists
+                    try:
+                        folders = await client.get_folders(space_id)
+                        for folder in folders:
+                            try:
+                                folder_lists = await client.get_lists(folder.id)
+                                all_lists.extend(folder_lists)
+                            except ClickUpError:
+                                pass
+                    except ClickUpError:
+                        pass
+
+                if not all_lists:
+                    console.print("[yellow]No lists found in this space.[/yellow]")
+                    raise typer.Exit(1)
+
+                current_id = config.get("default_list_id")
+                console.print("Select a list:")
+                list_options = []
+                for lst in all_lists:
+                    marker = " [green](current)[/green]" if lst.id == current_id else ""
+                    list_options.append((lst.id, f"{lst.name}{marker}"))
+
+                list_id, _ = prompt_selection(list_options, f"Select list [1-{len(all_lists)}]", console)
+                selected_list = next(lst for lst in all_lists if lst.id == list_id)
+
+                config.set("default_list_id", selected_list.id)
+                config.set("default_list_name", selected_list.name)
+                console.print(f"[green]Switched to list: {selected_list.name}[/green]")
+
+        except ClickUpError as e:
+            console.print(f"[red]ClickUp API Error: {e}[/red]")
+            raise typer.Exit(1) from e
+
+    run_async(_switch())

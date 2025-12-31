@@ -16,8 +16,8 @@ from rich.progress import (
 )
 from rich.table import Table
 
-from ...core import ClickUpClient, ClickUpError, Config
-from ..utils import run_async
+from clickup.cli.utils import run_async
+from clickup.core import ClickUpClient, ClickUpError, Config
 
 app = typer.Typer(help="Bulk operations and import/export")
 console = Console()

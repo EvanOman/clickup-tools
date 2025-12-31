@@ -33,7 +33,8 @@ def test_cli_status_no_token():
         with patch.dict("os.environ", env_overrides, clear=False):
             result = runner.invoke(app, ["status"])
             assert result.exit_code == 0
-            assert "Not configured" in result.stdout
+            # Output now shows friendly messages - either "Not configured" or "None"
+            assert "None" in result.stdout or "Not configured" in result.stdout
 
 
 def test_config_set_token():

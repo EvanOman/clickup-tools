@@ -6,9 +6,10 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from ..core import ClickUpClient, Config
-from .commands import bulk, config, discover, task, templates, workspace
-from .commands import list as list_cmd
+from clickup.cli.commands import bulk, config, discover, setup, task, templates, workspace
+from clickup.cli.commands import list as list_cmd
+from clickup.cli.utils import format_config_value
+from clickup.core import ClickUpClient, Config
 
 app = typer.Typer(
     name="clickup",
@@ -20,6 +21,7 @@ app = typer.Typer(
 # Add subcommands
 app.add_typer(task.app, name="task", help="Task management commands")
 app.add_typer(config.app, name="config", help="Configuration commands")
+app.add_typer(setup.app, name="setup", help="Setup wizard and configuration")
 app.add_typer(workspace.app, name="workspace", help="Workspace management commands")
 app.add_typer(list_cmd.app, name="list", help="List management commands")
 app.add_typer(bulk.app, name="bulk", help="Bulk operations and import/export")
@@ -56,9 +58,19 @@ def status() -> None:
 
         base_url = config_manager.get("base_url") or "N/A"
         table.add_row("Base URL", base_url)
-        table.add_row("Default Team", config_manager.get("default_team_id") or "[dim]None[/dim]")
-        table.add_row("Default Space", config_manager.get("default_space_id") or "[dim]None[/dim]")
-        table.add_row("Default List", config_manager.get("default_list_id") or "[dim]None[/dim]")
+
+        # Show friendly names with IDs in dim
+        workspace_name = config_manager.get("default_workspace_name")
+        workspace_id = config_manager.get("default_team_id")
+        table.add_row("Default Workspace", format_config_value(workspace_name, workspace_id))
+
+        space_name = config_manager.get("default_space_name")
+        space_id = config_manager.get("default_space_id")
+        table.add_row("Default Space", format_config_value(space_name, space_id))
+
+        list_name = config_manager.get("default_list_name")
+        list_id = config_manager.get("default_list_id")
+        table.add_row("Default List", format_config_value(list_name, list_id))
         output_format = config_manager.get("output_format") or "json"
         table.add_row("Output Format", output_format)
 
@@ -79,15 +91,12 @@ def status() -> None:
         console.print(table)
 
         if not has_token:
-            console.print(
-                "\n[yellow]⚠️  No API token configured. Set CLICKUP_API_KEY environment variable "
-                "or use 'clickup config set-token <token>'.[/yellow]"
-            )
-            console.print("💡 Get your API token from ClickUp Settings > Apps > API Token")
+            console.print("\n[yellow]⚠️  No API token configured.[/yellow]")
+            console.print("💡 Run '[bold]clickup setup wizard[/bold]' to get started.")
         else:
-            console.print(
-                "\n💡 Need folder or list IDs? Use '[bold]clickup discover ids[/bold]' to explore your workspace!"
-            )
+            console.print("\n💡 Run '[bold]clickup setup wizard[/bold]' to configure your defaults.")
+            console.print("   Use '[bold]clickup config switch-workspace[/bold]' to change workspace.")
+            console.print("   Use '[bold]clickup config switch-space[/bold]' to change space.")
 
     asyncio.run(_status())
 
@@ -95,7 +104,7 @@ def status() -> None:
 @app.command()
 def version() -> None:
     """Show version information."""
-    from . import __version__
+    from clickup.cli import __version__
 
     console.print(f"ClickUp Toolkit CLI v{__version__}")
 

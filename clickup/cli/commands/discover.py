@@ -6,8 +6,8 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 from rich.tree import Tree
 
-from ...core import ClickUpClient, ClickUpError, Config
-from ..utils import run_async
+from clickup.cli.utils import run_async
+from clickup.core import ClickUpClient, ClickUpError, Config
 
 app = typer.Typer(help="Discover and navigate ClickUp hierarchy")
 console = Console()
@@ -17,10 +17,8 @@ async def get_client() -> ClickUpClient:
     """Get configured ClickUp client."""
     config = Config()
     if not config.has_credentials():
-        console.print(
-            "[red]Error: No client credentials configured. Set CLICKUP_CLIENT_ID and "
-            "CLICKUP_CLIENT_SECRET environment variables.[/red]"
-        )
+        console.print("[red]Error: No API credentials configured.[/red]")
+        console.print("Run 'clickup setup wizard' to configure your credentials.")
         raise typer.Exit(1)
     return ClickUpClient(config, console)
 

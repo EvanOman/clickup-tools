@@ -3,6 +3,6 @@
 __version__ = "0.2.0"
 
 # Import main modules
-from . import cli, core
+from clickup import cli, core
 
 __all__ = ["core", "cli"]
