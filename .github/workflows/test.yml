@@ -40,11 +40,10 @@ jobs:
       run: uv run pytest --cov=clickup --cov-report=xml --cov-report=term-missing
 
     - name: Upload coverage to Codecov
-      if: ${{ secrets.CODECOV_TOKEN != '' }}
-      uses: codecov/codecov-action@v4
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        files: ./coverage.xml
-        flags: unittests
-        fail_ci_if_error: true
-        verbose: false
+      if: ${{ env.CODECOV_TOKEN != '' }}
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      run: |
+        curl -s https://uploader.codecov.io/latest/linux/codecov -o codecov
+        chmod +x codecov
+        ./codecov -f coverage.xml -F unittests
