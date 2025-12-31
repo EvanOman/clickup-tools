@@ -209,7 +209,7 @@ def list_templates(
     include_custom: bool = typer.Option(
         False, "--include-custom", help="Include custom templates from ~/.config/clickup/templates."
     ),
-):
+) -> None:
     """List all available templates."""
     built_in = load_built_in_templates()
     templates_dir = get_templates_dir()
@@ -237,7 +237,7 @@ def list_templates(
 
 
 @app.command("show")
-def show_template(name: str = typer.Argument(..., help="Template name")):
+def show_template(name: str = typer.Argument(..., help="Template name")) -> None:
     """Show template details."""
     built_in = load_built_in_templates()
     templates_dir = get_templates_dir()
@@ -293,10 +293,10 @@ def create_from_template(
     variables_file: str | None = _VARIABLES_FILE_OPTION,
     template_file: str | None = _TEMPLATE_FILE_OPTION,
     var: list[str] | None = _VAR_OPTION,
-):
+) -> None:
     """Create a task from a template."""
 
-    async def _create_from_template():
+    async def _create_from_template() -> None:
         nonlocal var
         if var is None:
             var = []
@@ -411,10 +411,10 @@ def create_from_template(
 def save_template(
     name: str = typer.Argument(..., help="Template name"),
     task_id: str = typer.Option(..., "--from-task", help="Create template from existing task"),
-):
+) -> None:
     """Save a task as a template."""
 
-    async def _save_template():
+    async def _save_template() -> None:
         try:
             async with await get_client() as client:
                 with Progress(
@@ -426,7 +426,7 @@ def save_template(
                     task = await client.get_task(task_id)
 
                 # Create template from task
-                template = {
+                template: dict[str, Any] = {
                     "name": task.name,
                     "description": task.description or "",
                     "priority": task.priority.get("priority", 3) if task.priority else 3,
@@ -462,6 +462,7 @@ def save_template(
                     variables.update(re.findall(r"\{(\w+)\}", text))
 
                 template["variables"] = sorted(variables)
+                variables_list: list[str] = template["variables"]
 
                 # Save template
                 templates_dir = get_templates_dir()
@@ -472,7 +473,7 @@ def save_template(
 
                 console.print(f"✅ Saved template: {name}")
                 console.print(f"📁 Location: {template_file}")
-                console.print(f"🔤 Variables: {', '.join(template['variables'])}")
+                console.print(f"🔤 Variables: {', '.join(variables_list)}")
 
         except ClickUpError as e:
             console.print(f"[red]ClickUp API Error: {e}[/red]")

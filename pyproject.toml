@@ -1,14 +1,14 @@
 [project]
 name = "clickup-toolkit"
 version = "0.1.0"
-description = "A powerful CLI and MCP interface for ClickUp task management"
+description = "A powerful CLI for ClickUp task management"
 authors = [
     { name = "Evan Oman", email = "evan@example.com" }
 ]
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.12"
-keywords = ["clickup", "cli", "mcp", "task-management", "ai-tools"]
+keywords = ["clickup", "cli", "task-management"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -22,7 +22,6 @@ dependencies = [
     "pydantic>=2.0.0",
     "typer>=0.12.0",
     "rich>=13.0.0",
-    "mcp>=1.0.0",
 ]
 
 [tool.uv]
@@ -47,7 +46,6 @@ packages = ["clickup"]
 
 [project.scripts]
 clickup = "clickup.cli.main:main"
-clickup-mcp = "clickup.mcp.server:main"
 
 
 [tool.ruff]

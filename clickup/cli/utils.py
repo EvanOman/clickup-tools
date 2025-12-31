@@ -1,13 +1,14 @@
 """Utility functions for CLI commands."""
 
 import asyncio
-from collections.abc import Awaitable
-from typing import TypeVar
+import concurrent.futures
+from collections.abc import Coroutine
+from typing import Any, TypeVar
 
 T = TypeVar("T")
 
 
-def run_async[T](coro: Awaitable[T]) -> T:
+def run_async(coro: Coroutine[Any, Any, T]) -> T:  # noqa: UP047
     """
     Helper to run async functions in sync context.
 
@@ -15,9 +16,8 @@ def run_async[T](coro: Awaitable[T]) -> T:
     - Normal execution: uses asyncio.run()
     - Testing with pytest-asyncio: runs in new thread with new event loop
     """
-    import concurrent.futures
 
-    def _run_in_new_loop():
+    def _run_in_new_loop() -> T:
         """Run coroutine in a completely new event loop."""
         new_loop = asyncio.new_event_loop()
         try:

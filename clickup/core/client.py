@@ -49,7 +49,8 @@ class ClickUpClient:
         """Handle HTTP response and raise appropriate exceptions."""
         try:
             if response.status_code == 200:
-                return response.json()
+                result: dict[str, Any] = response.json()
+                return result
             elif response.status_code == 401:
                 raise AuthenticationError("Invalid API token", response.status_code)
             elif response.status_code == 403:
@@ -147,9 +148,15 @@ class ClickUpClient:
         return ClickUpList(**data)
 
     async def create_list(self, folder_id: str, name: str, **kwargs: Any) -> ClickUpList:
-        """Create a new list."""
+        """Create a new list in a folder."""
         payload = {"name": name, **kwargs}
         data = await self._request("POST", f"/folder/{folder_id}/list", json=payload)
+        return ClickUpList(**data)
+
+    async def create_folderless_list(self, space_id: str, name: str, **kwargs: Any) -> ClickUpList:
+        """Create a new folderless list in a space."""
+        payload = {"name": name, **kwargs}
+        data = await self._request("POST", f"/space/{space_id}/list", json=payload)
         return ClickUpList(**data)
 
     # Tasks
