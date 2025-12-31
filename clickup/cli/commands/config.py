@@ -3,39 +3,13 @@
 import typer
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
-from rich.prompt import IntPrompt
 from rich.table import Table
 
 from ...core import ClickUpClient, ClickUpError, Config
-from ..utils import run_async
+from ..utils import prompt_selection, run_async
 
 app = typer.Typer(help="Configuration management")
 console = Console()
-
-
-def _prompt_selection(items: list[tuple[str, str]], prompt_text: str) -> tuple[str, str]:
-    """Prompt user to select from a numbered list.
-
-    Args:
-        items: List of (id, name) tuples
-        prompt_text: Text to show for the prompt
-
-    Returns:
-        Selected (id, name) tuple
-    """
-    console.print()
-    for i, (_item_id, name) in enumerate(items, 1):
-        console.print(f"  [cyan]{i}.[/cyan] {name}")
-    console.print()
-
-    while True:
-        try:
-            choice = IntPrompt.ask(prompt_text, console=console)
-            if 1 <= choice <= len(items):
-                return items[choice - 1]
-            console.print(f"[red]Please enter a number between 1 and {len(items)}[/red]")
-        except (ValueError, KeyboardInterrupt):
-            raise typer.Exit(1) from None
 
 
 @app.command("set-client-id")
@@ -191,7 +165,9 @@ def switch_workspace() -> None:
                     marker = " [green](current)[/green]" if w.id == current_id else ""
                     workspace_options.append((w.id, f"{w.name}{marker}"))
 
-                workspace_id, _ = _prompt_selection(workspace_options, f"Select workspace [1-{len(workspaces)}]")
+                workspace_id, _ = prompt_selection(
+                    workspace_options, f"Select workspace [1-{len(workspaces)}]", console
+                )
                 workspace = next(w for w in workspaces if w.id == workspace_id)
 
                 config.set("default_team_id", workspace.id)
@@ -244,7 +220,7 @@ def switch_space() -> None:
                     marker = " [green](current)[/green]" if s.id == current_id else ""
                     space_options.append((s.id, f"{s.name}{marker}"))
 
-                space_id, _ = _prompt_selection(space_options, f"Select space [1-{len(spaces)}]")
+                space_id, _ = prompt_selection(space_options, f"Select space [1-{len(spaces)}]", console)
                 space = next(s for s in spaces if s.id == space_id)
 
                 config.set("default_space_id", space.id)
@@ -318,7 +294,7 @@ def switch_list() -> None:
                     marker = " [green](current)[/green]" if lst.id == current_id else ""
                     list_options.append((lst.id, f"{lst.name}{marker}"))
 
-                list_id, _ = _prompt_selection(list_options, f"Select list [1-{len(all_lists)}]")
+                list_id, _ = prompt_selection(list_options, f"Select list [1-{len(all_lists)}]", console)
                 selected_list = next(lst for lst in all_lists if lst.id == list_id)
 
                 config.set("default_list_id", selected_list.id)

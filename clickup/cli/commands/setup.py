@@ -4,38 +4,13 @@ import typer
 from rich.console import Console
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
-from rich.prompt import IntPrompt, Prompt
+from rich.prompt import Prompt
 
 from ...core import ClickUpClient, ClickUpError, Config
-from ..utils import run_async
+from ..utils import prompt_selection, run_async
 
 app = typer.Typer(help="Setup and configuration wizard")
 console = Console()
-
-
-def _prompt_selection(items: list[tuple[str, str]], prompt_text: str) -> tuple[str, str]:
-    """Prompt user to select from a numbered list.
-
-    Args:
-        items: List of (id, name) tuples
-        prompt_text: Text to show for the prompt
-
-    Returns:
-        Selected (id, name) tuple
-    """
-    console.print()
-    for i, (_item_id, name) in enumerate(items, 1):
-        console.print(f"  [cyan]{i}.[/cyan] {name}")
-    console.print()
-
-    while True:
-        try:
-            choice = IntPrompt.ask(prompt_text, console=console)
-            if 1 <= choice <= len(items):
-                return items[choice - 1]
-            console.print(f"[red]Please enter a number between 1 and {len(items)}[/red]")
-        except (ValueError, KeyboardInterrupt):
-            raise typer.Exit(1) from None
 
 
 @app.command("wizard")
@@ -95,8 +70,8 @@ def setup_wizard() -> None:
                 else:
                     console.print(f"Found {len(workspaces)} workspaces:")
                     workspace_options = [(w.id, w.name) for w in workspaces]
-                    workspace_id, workspace_name = _prompt_selection(
-                        workspace_options, f"Select a workspace [1-{len(workspaces)}]"
+                    workspace_id, _ = prompt_selection(
+                        workspace_options, f"Select a workspace [1-{len(workspaces)}]", console
                     )
                     workspace = next(w for w in workspaces if w.id == workspace_id)
                     console.print(f"Using [cyan]{workspace.name}[/cyan] as your default workspace.")
@@ -130,7 +105,9 @@ def setup_wizard() -> None:
                 else:
                     console.print(f"Found {len(spaces)} spaces:")
                     space_options = [(s.id, s.name) for s in spaces]
-                    space_id, space_name = _prompt_selection(space_options, f"Select a space [1-{len(spaces)}]")
+                    space_id, _ = prompt_selection(
+                        space_options, f"Select a space [1-{len(spaces)}]", console
+                    )
                     space = next(s for s in spaces if s.id == space_id)
                     console.print(f"Using [cyan]{space.name}[/cyan] as your default space.")
 

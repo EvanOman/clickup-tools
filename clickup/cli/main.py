@@ -7,6 +7,7 @@ from rich.console import Console
 from rich.table import Table
 
 from ..core import ClickUpClient, Config
+from .utils import format_config_value
 from .commands import bulk, config, discover, setup, task, templates, workspace
 from .commands import list as list_cmd
 
@@ -61,30 +62,15 @@ def status() -> None:
         # Show friendly names with IDs in dim
         workspace_name = config_manager.get("default_workspace_name")
         workspace_id = config_manager.get("default_team_id")
-        if workspace_name and workspace_id:
-            table.add_row("Default Workspace", f"{workspace_name} [dim]({workspace_id})[/dim]")
-        elif workspace_id:
-            table.add_row("Default Workspace", f"[dim]{workspace_id}[/dim]")
-        else:
-            table.add_row("Default Workspace", "[dim]None[/dim]")
+        table.add_row("Default Workspace", format_config_value(workspace_name, workspace_id))
 
         space_name = config_manager.get("default_space_name")
         space_id = config_manager.get("default_space_id")
-        if space_name and space_id:
-            table.add_row("Default Space", f"{space_name} [dim]({space_id})[/dim]")
-        elif space_id:
-            table.add_row("Default Space", f"[dim]{space_id}[/dim]")
-        else:
-            table.add_row("Default Space", "[dim]None[/dim]")
+        table.add_row("Default Space", format_config_value(space_name, space_id))
 
         list_name = config_manager.get("default_list_name")
         list_id = config_manager.get("default_list_id")
-        if list_name and list_id:
-            table.add_row("Default List", f"{list_name} [dim]({list_id})[/dim]")
-        elif list_id:
-            table.add_row("Default List", f"[dim]{list_id}[/dim]")
-        else:
-            table.add_row("Default List", "[dim]None[/dim]")
+        table.add_row("Default List", format_config_value(list_name, list_id))
         output_format = config_manager.get("output_format") or "json"
         table.add_row("Output Format", output_format)
 
