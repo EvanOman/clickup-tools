@@ -45,7 +45,7 @@ class User(BaseModel):
     email: str
     color: str | None = None
     profilePicture: str | None = None
-    role: str | None = None
+    role: int | str | None = None  # API returns int, but could be string
 
 
 class Assignee(BaseModel):

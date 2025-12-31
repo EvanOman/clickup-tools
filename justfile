@@ -4,14 +4,29 @@
 default:
     @just --list
 
-# Run linting and tests
+# Run linting, type checking, and tests (excludes live tests)
 check:
-    @echo "Running linting..."
+    @echo "Running ruff linting..."
     uv run ruff check
     @echo "Running format check..."
     uv run ruff format --check
+    @echo "Running type checking..."
+    uv run mypy clickup/
     @echo "Running tests..."
     uv run pytest --cov=clickup --cov-report=xml --cov-report=term-missing
+
+# Run all checks including live integration tests (requires CLICKUP_API_KEY)
+check-local:
+    @echo "Running ruff linting..."
+    uv run ruff check
+    @echo "Running format check..."
+    uv run ruff format --check
+    @echo "Running type checking..."
+    uv run mypy clickup/ tests/live/
+    @echo "Running unit and integration tests..."
+    uv run pytest tests/unit tests/integration --cov=clickup --cov-report=term-missing
+    @echo "Running live integration tests..."
+    uv run pytest tests/live -v --no-cov
 
 # Fix linting and formatting issues
 fix:
@@ -20,12 +35,27 @@ fix:
     @echo "Formatting code..."
     uv run ruff format
 
-# Run tests only
+# Fix and then check (quick iteration)
+fc: fix check
+
+# Fix and then check-local (full local validation)
+fc-local: fix check-local
+
+# Run tests only (excludes live tests)
 test:
     uv run pytest --cov=clickup --cov-report=xml --cov-report=term-missing
 
-# Fix and then check
-fc: fix check
+# Run live integration tests only (requires CLICKUP_API_KEY)
+test-live:
+    @echo "Running live integration tests..."
+    @echo "Note: Requires CLICKUP_API_KEY environment variable or .env file"
+    uv run pytest tests/live -v --no-cov
+
+# Run all tests including live tests
+test-all:
+    @echo "Running all tests..."
+    uv run pytest tests/unit tests/integration --cov=clickup --cov-report=term-missing
+    uv run pytest tests/live -v --no-cov
 
 # Install dependencies
 install:
@@ -56,11 +86,12 @@ build:
 cli *ARGS:
     uv run clickup {{ARGS}}
 
-# Type checking (currently commented out in CI)
+# Type checking
 typecheck:
-    uv run mypy clickup/
+    uv run mypy clickup/ tests/live/
 
 # Full development setup
 setup: install
     @echo "Development environment ready!"
     @echo "Run 'just check' to validate your setup"
+    @echo "Run 'just check-local' to run all checks including live tests"

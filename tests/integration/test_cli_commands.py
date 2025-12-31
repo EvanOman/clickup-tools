@@ -20,7 +20,17 @@ def test_cli_version():
 def test_cli_status_no_token():
     """Test status command without API token."""
     with tempfile.TemporaryDirectory() as tmpdir:
-        with patch.dict("os.environ", {"HOME": tmpdir}):
+        # Clear all token environment variables and set a temp HOME
+        env_overrides = {
+            "HOME": tmpdir,
+            "CLICKUP_API_TOKEN": "",
+            "CLICKUP_API_KEY": "",
+            "CLICKUP_TOKEN": "",
+            "CLICKUP_ACCESS_TOKEN": "",
+            "CLICKUP_CLIENT_ID": "",
+            "CLICKUP_CLIENT_SECRET": "",
+        }
+        with patch.dict("os.environ", env_overrides, clear=False):
             result = runner.invoke(app, ["status"])
             assert result.exit_code == 0
             assert "Not configured" in result.stdout
