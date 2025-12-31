@@ -2,7 +2,7 @@ name: Test
 
 on:
   push:
-    branches: [ master, develop ]
+    branches: [ "**" ]
   pull_request:
     branches: [ master, develop ]
 
@@ -33,8 +33,17 @@ jobs:
     - name: Run formatting check
       run: uv run ruff format --check
 
-    # - name: Run type checking
-    #   run: uv run mypy clickup/
+    - name: Run type checking
+      run: uv run ty check
 
     - name: Run tests
       run: uv run pytest --cov=clickup --cov-report=xml --cov-report=term-missing
+
+    - name: Upload coverage to Codecov
+      if: ${{ env.CODECOV_TOKEN != '' }}
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      run: |
+        curl -s https://uploader.codecov.io/latest/linux/codecov -o codecov
+        chmod +x codecov
+        ./codecov -f coverage.xml -F unittests

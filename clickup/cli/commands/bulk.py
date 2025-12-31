@@ -90,8 +90,8 @@ def export_tasks(
                             writer.writeheader()
 
                             for task in tasks:
-                                status = task.status.get("status", "") if task.status else ""
-                                priority = task.priority.get("priority", "") if task.priority else ""
+                                status = task.status.status if task.status else ""
+                                priority = task.priority.priority or "" if task.priority else ""
                                 assignees = ", ".join([a.username for a in task.assignees]) if task.assignees else ""
 
                                 writer.writerow(

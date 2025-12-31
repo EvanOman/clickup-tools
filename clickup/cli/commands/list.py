@@ -124,10 +124,10 @@ def get_list(list_id: str | None = typer.Option(None, "--list-id", "-l", help="L
                     table.add_row("Assignee", list_item.assignee.username)
 
                 if list_item.folder:
-                    table.add_row("Folder", list_item.folder.get("name", "Unknown"))
+                    table.add_row("Folder", list_item.folder.name or "Unknown")
 
                 if list_item.space:
-                    table.add_row("Space", list_item.space.get("name", "Unknown"))
+                    table.add_row("Space", list_item.space.name or "Unknown")
 
                 console.print(table)
 

@@ -11,7 +11,7 @@ check:
     @echo "Running format check..."
     uv run ruff format --check
     @echo "Running type checking..."
-    uv run mypy clickup/
+    uv run ty check
     @echo "Running tests..."
     uv run pytest --cov=clickup --cov-report=xml --cov-report=term-missing
 
@@ -22,7 +22,7 @@ check-local:
     @echo "Running format check..."
     uv run ruff format --check
     @echo "Running type checking..."
-    uv run mypy clickup/ tests/live/
+    uv run ty check
     @echo "Running unit and integration tests..."
     uv run pytest tests/unit tests/integration --cov=clickup --cov-report=term-missing
     @echo "Running live integration tests..."
@@ -88,7 +88,7 @@ cli *ARGS:
 
 # Type checking
 typecheck:
-    uv run mypy clickup/ tests/live/
+    uv run ty check
 
 # Full development setup
 setup: install

@@ -34,12 +34,11 @@ build-backend = "hatchling.build"
 
 [dependency-groups]
 dev = [
-    "mypy>=1.16.1",
+    "ty>=0.0.8",
     "pytest>=8.4.1",
     "pytest-asyncio>=1.0.0",
     "pytest-cov>=6.2.1",
     "ruff>=0.12.3",
-    "types-click>=7.1.8",
 ]
 
 [tool.hatch.build.targets.wheel]
@@ -68,12 +67,8 @@ select = [
 quote-style = "double"
 indent-style = "space"
 
-[tool.mypy]
-python_version = "3.12"
-strict = true
-warn_return_any = true
-warn_unused_configs = true
-disallow_untyped_defs = true
+[tool.ty.environment]
+python-version = "3.12"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

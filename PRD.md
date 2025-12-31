@@ -61,7 +61,7 @@ Create a powerful ClickUp CLI for seamless task management through command-line 
 5. Interactive prompts and confirmations [COMPLETE_UNTESTED]
 
 ### Phase 4: Polish & Documentation [COMPLETE_TESTED]
-1. Comprehensive testing [COMPLETE_TESTED] (77% coverage, 0 mypy errors)
+1. Comprehensive testing [COMPLETE_TESTED] (77% coverage, 0 ty errors)
 2. Documentation and examples [COMPLETE_TESTED]
 3. Package publishing setup [COMPLETE_TESTED]
 4. Performance optimization [COMPLETE_TESTED]
@@ -74,7 +74,7 @@ Create a powerful ClickUp CLI for seamless task management through command-line 
 - **HTTP Client**: httpx
 - **Testing**: pytest
 - **Code Quality**: ruff (linting + formatting)
-- **Type Checking**: mypy
+- **Type Checking**: ty
 - **Data Models**: pydantic
 - **CLI Output**: rich
 
@@ -119,7 +119,7 @@ Based on ClickUp API v2 research, key endpoints include:
 - Core ClickUp API client with full error handling and rate limiting
 - Authentication system (API token, multi-workspace)
 - Configuration management with secure credential storage
-- Data models and type definitions (0 mypy errors)
+- Data models and type definitions (0 ty errors)
 - Documentation and examples
 - Package publishing setup
 - 77% test coverage

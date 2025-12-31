@@ -37,9 +37,9 @@ def format_task_table(tasks: list[Task]) -> Table:
     table.add_column("Due Date", style="red")
 
     for task in tasks:
-        status = task.status.get("status", "Unknown") if task.status else "Unknown"
+        status = task.status.status if task.status else "Unknown"
         assignees = ", ".join([a.username for a in task.assignees]) if task.assignees else "Unassigned"
-        priority = task.priority.get("priority", "None") if task.priority else "None"
+        priority = task.priority.priority or "None" if task.priority else "None"
         due_date = task.due_date or "None"
 
         table.add_row(task.id, task.name, status, assignees, priority, due_date)
@@ -121,11 +121,11 @@ def get_task(task_id: str = typer.Argument(..., help="Task ID")) -> None:
                 table.add_row("ID", task.id)
                 table.add_row("Name", task.name)
                 table.add_row("Description", task.description or "None")
-                table.add_row("Status", task.status.get("status", "Unknown") if task.status else "Unknown")
+                table.add_row("Status", task.status.status if task.status else "Unknown")
                 table.add_row(
                     "Assignees", ", ".join([a.username for a in task.assignees]) if task.assignees else "Unassigned"
                 )
-                table.add_row("Priority", task.priority.get("priority", "None") if task.priority else "None")
+                table.add_row("Priority", task.priority.priority or "None" if task.priority else "None")
                 table.add_row("Due Date", task.due_date or "None")
                 table.add_row("Created", task.date_created or "Unknown")
                 table.add_row("Updated", task.date_updated or "Unknown")
@@ -350,9 +350,9 @@ def search_tasks(
                 table.add_column("Due Date", style="red")
 
                 for task in tasks:
-                    status = task.status.get("status", "Unknown") if task.status else "Unknown"
+                    status = task.status.status if task.status else "Unknown"
                     assignees = ", ".join([a.username for a in task.assignees]) if task.assignees else "Unassigned"
-                    priority = task.priority.get("priority", "None") if task.priority else "None"
+                    priority = task.priority.priority or "None" if task.priority else "None"
                     due_date = task.due_date or "None"
 
                     table.add_row(task.id, task.name, status, assignees, priority, due_date)
@@ -427,8 +427,8 @@ def export_tasks(
                         writer.writeheader()
 
                         for task in tasks:
-                            status = task.status.get("status", "") if task.status else ""
-                            priority = task.priority.get("priority", "") if task.priority else ""
+                            status = task.status.status if task.status else ""
+                            priority = task.priority.priority or "" if task.priority else ""
                             assignees = ", ".join([a.username for a in task.assignees]) if task.assignees else ""
 
                             writer.writerow(

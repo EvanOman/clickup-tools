@@ -429,7 +429,7 @@ def save_template(
                 template: dict[str, Any] = {
                     "name": task.name,
                     "description": task.description or "",
-                    "priority": task.priority.get("priority", 3) if task.priority else 3,
+                    "priority": int(task.priority.priority) if task.priority and task.priority.priority else 3,
                     "variables": [],
                 }
 
