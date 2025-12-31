@@ -210,7 +210,7 @@ def list_members(
                         str(member.id),
                         member.username,
                         member.email,
-                        member.role or "None",
+                        str(member.role) if member.role is not None else "None",
                         member.color or "None",
                     )
 
