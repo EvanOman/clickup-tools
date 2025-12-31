@@ -5,15 +5,27 @@ import os
 from pathlib import Path
 from typing import Any
 
+from dotenv import load_dotenv
 from pydantic import BaseModel
 
-# Optional .env file loading
-try:
-    from dotenv import load_dotenv  # type: ignore[import-not-found]
 
-    load_dotenv()
-except ImportError:
-    pass
+def _load_dotenv_files() -> None:
+    """Load .env files from current directory and user config directory.
+
+    Priority (later files override earlier):
+    1. ~/.config/clickup-toolkit/.env (user-level config)
+    2. .env in current working directory (project-level config)
+    """
+    # Load from user config directory first
+    user_config_env = Path.home() / ".config" / "clickup-toolkit" / ".env"
+    if user_config_env.exists():
+        load_dotenv(user_config_env)
+
+    # Load from current directory (overrides user config)
+    load_dotenv(override=True)
+
+
+_load_dotenv_files()
 
 
 class ClickUpConfig(BaseModel):
