@@ -12,9 +12,7 @@ from rich.prompt import IntPrompt
 T = TypeVar("T")
 
 
-def prompt_selection(
-    items: list[tuple[str, str]], prompt_text: str, console: Console
-) -> tuple[str, str]:
+def prompt_selection(items: list[tuple[str, str]], prompt_text: str, console: Console) -> tuple[str, str]:
     """Prompt user to select from a numbered list.
 
     Args:

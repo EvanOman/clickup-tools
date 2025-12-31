@@ -105,9 +105,7 @@ def setup_wizard() -> None:
                 else:
                     console.print(f"Found {len(spaces)} spaces:")
                     space_options = [(s.id, s.name) for s in spaces]
-                    space_id, _ = prompt_selection(
-                        space_options, f"Select a space [1-{len(spaces)}]", console
-                    )
+                    space_id, _ = prompt_selection(space_options, f"Select a space [1-{len(spaces)}]", console)
                     space = next(s for s in spaces if s.id == space_id)
                     console.print(f"Using [cyan]{space.name}[/cyan] as your default space.")
 
