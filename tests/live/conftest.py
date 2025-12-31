@@ -38,6 +38,7 @@ def api_key() -> str:
     key = os.environ.get("CLICKUP_API_KEY") or os.environ.get("CLICKUP_API_TOKEN")
     if not key:
         pytest.skip("CLICKUP_API_KEY environment variable not set")
+        raise RuntimeError("unreachable")  # Help type checker understand pytest.skip raises
     return key
 
 

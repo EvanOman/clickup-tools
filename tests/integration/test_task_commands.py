@@ -7,6 +7,7 @@ import pytest
 from typer.testing import CliRunner
 
 from clickup.cli.main import app
+from clickup.core.models import PriorityInfo, StatusInfo
 
 runner = CliRunner()
 
@@ -26,8 +27,8 @@ def sample_tasks():
         task = Mock()
         task.id = f"task{i}"
         task.name = name
-        task.status = {"status": status}
-        task.priority = {"priority": priority}
+        task.status = StatusInfo(status=status)
+        task.priority = PriorityInfo(priority=priority)
         task.assignees = []
         task.due_date = None
         task.description = f"Description for {name}"
@@ -55,8 +56,8 @@ def sample_task_detail():
     task.id = "task123"
     task.name = "Detailed Task"
     task.description = "A detailed task description"
-    task.status = {"status": "in progress"}
-    task.priority = {"priority": "high"}
+    task.status = StatusInfo(status="in progress")
+    task.priority = PriorityInfo(priority="high")
     task.assignees = [Mock(username="john.doe")]
     task.due_date = "2024-12-31"
     task.date_created = "2024-01-01"
