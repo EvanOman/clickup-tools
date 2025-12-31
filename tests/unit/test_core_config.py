@@ -5,8 +5,12 @@ import pytest
 from clickup.core import Config
 
 
-def test_config_creation(temp_config_dir):
+def test_config_creation(temp_config_dir, monkeypatch):
     """Test configuration creation."""
+    # Clear environment variables to ensure clean test
+    monkeypatch.delenv("CLICKUP_API_TOKEN", raising=False)
+    monkeypatch.delenv("CLICKUP_API_KEY", raising=False)
+
     config = Config(config_path=temp_config_dir / "config.json")
     assert config.config_path.parent == temp_config_dir
     assert config.get("api_token") is None
@@ -21,8 +25,12 @@ def test_set_api_token(temp_config_dir):
     assert config.config.api_token == "test_token"
 
 
-def test_config_persistence(temp_config_dir):
+def test_config_persistence(temp_config_dir, monkeypatch):
     """Test configuration persistence."""
+    # Clear environment variables to ensure clean test
+    monkeypatch.delenv("CLICKUP_API_TOKEN", raising=False)
+    monkeypatch.delenv("CLICKUP_API_KEY", raising=False)
+
     config_path = temp_config_dir / "config.json"
 
     # Create and save config
@@ -48,13 +56,13 @@ def test_config_headers(temp_config_dir):
 
 def test_config_headers_no_token(temp_config_dir, monkeypatch):
     """Test headers generation without token."""
-    # Clear environment variables that might provide credentials
+    # Clear all possible token environment variables
     monkeypatch.delenv("CLICKUP_API_TOKEN", raising=False)
     monkeypatch.delenv("CLICKUP_API_KEY", raising=False)
-    monkeypatch.delenv("CLICKUP_CLIENT_ID", raising=False)
-    monkeypatch.delenv("CLICKUP_CLIENT_SECRET", raising=False)
     monkeypatch.delenv("CLICKUP_TOKEN", raising=False)
     monkeypatch.delenv("CLICKUP_ACCESS_TOKEN", raising=False)
+    monkeypatch.delenv("CLICKUP_CLIENT_ID", raising=False)
+    monkeypatch.delenv("CLICKUP_CLIENT_SECRET", raising=False)
 
     config = Config(config_path=temp_config_dir / "config.json")
 

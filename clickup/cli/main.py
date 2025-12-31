@@ -41,20 +41,19 @@ def status() -> None:
         table.add_column("Setting", style="cyan")
         table.add_column("Value", style="green")
 
-        # Check credentials
-        client_id = config_manager.get_client_id()
-        client_secret = config_manager.get_client_secret()
+        # Check API token (primary auth method)
+        api_token = config_manager.get_api_token()
+        has_token = config_manager.has_credentials()
 
-        if client_id:
-            masked_id = f"{client_id[:8]}...{client_id[-4:]}" if len(client_id) > 12 else "***"
-            table.add_row("Client ID", masked_id)
+        if api_token:
+            # Mask the token for display
+            if len(api_token) > 12:
+                masked_token = f"{api_token[:8]}...{api_token[-4:]}"
+            else:
+                masked_token = "***"
+            table.add_row("API Token", masked_token)
         else:
-            table.add_row("Client ID", "[red]Not configured[/red]")
-
-        if client_secret:
-            table.add_row("Client Secret", "***")
-        else:
-            table.add_row("Client Secret", "[red]Not configured[/red]")
+            table.add_row("API Token", "[red]Not configured[/red]")
 
         base_url = config_manager.get("base_url") or "N/A"
         table.add_row("Base URL", base_url)
@@ -89,8 +88,8 @@ def status() -> None:
         output_format = config_manager.get("output_format") or "json"
         table.add_row("Output Format", output_format)
 
-        # Test authentication if credentials are available
-        if client_id and client_secret:
+        # Test authentication if API token is available
+        if has_token:
             try:
                 async with ClickUpClient(config_manager) as client:
                     is_valid, message, user = await client.validate_auth()
@@ -101,12 +100,12 @@ def status() -> None:
             except Exception as e:
                 table.add_row("Auth Status", f"[red]❌ Error: {str(e)}[/red]")
         else:
-            table.add_row("Auth Status", "[yellow]⚠️  No credentials to test[/yellow]")
+            table.add_row("Auth Status", "[yellow]⚠️  No API token configured[/yellow]")
 
         console.print(table)
 
-        if not client_id or not client_secret:
-            console.print("\n[yellow]⚠️  No API credentials configured.[/yellow]")
+        if not has_token:
+            console.print("\n[yellow]⚠️  No API token configured.[/yellow]")
             console.print("💡 Run '[bold]clickup setup wizard[/bold]' to get started.")
         else:
             console.print("\n💡 Run '[bold]clickup setup wizard[/bold]' to configure your defaults.")

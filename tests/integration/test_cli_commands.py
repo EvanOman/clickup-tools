@@ -20,13 +20,15 @@ def test_cli_version():
 def test_cli_status_no_token():
     """Test status command without API token."""
     with tempfile.TemporaryDirectory() as tmpdir:
-        # Clear all ClickUp-related env vars and set HOME to temp dir
+        # Clear all token environment variables and set a temp HOME
         env_overrides = {
             "HOME": tmpdir,
-            "CLICKUP_CLIENT_ID": "",
-            "CLICKUP_CLIENT_SECRET": "",
             "CLICKUP_API_TOKEN": "",
             "CLICKUP_API_KEY": "",
+            "CLICKUP_TOKEN": "",
+            "CLICKUP_ACCESS_TOKEN": "",
+            "CLICKUP_CLIENT_ID": "",
+            "CLICKUP_CLIENT_SECRET": "",
         }
         with patch.dict("os.environ", env_overrides, clear=False):
             result = runner.invoke(app, ["status"])
