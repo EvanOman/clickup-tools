@@ -7,22 +7,19 @@
 ### Required Stack:
 - **Runtime**: Python 3.12+
 - **Package Manager**: uv (https://github.com/astral-sh/uv)
-- **CLI Framework**: Click
+- **CLI Framework**: Typer
 - **HTTP Client**: httpx
-- **MCP**: mcp (Python MCP SDK)
 - **Testing**: pytest
 - **Code Quality**: ruff (linting + formatting)
 - **Type Checking**: mypy
-- **Project Structure**: uv workspace with multiple packages
 
 ### Project Architecture:
 ```
 clickup-toolkit/
-├── pyproject.toml          # Root workspace config
-├── packages/
+├── pyproject.toml          # Root config
+├── clickup/
 │   ├── core/              # Shared ClickUp API client
-│   ├── cli/               # CLI interface
-│   └── mcp/               # MCP server
+│   └── cli/               # CLI interface
 └── README.md
 ```
 

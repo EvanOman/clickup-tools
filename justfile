@@ -56,10 +56,6 @@ build:
 cli *ARGS:
     uv run clickup {{ARGS}}
 
-# Run the MCP server locally
-mcp *ARGS:
-    uv run clickup-mcp {{ARGS}}
-
 # Type checking (currently commented out in CI)
 typecheck:
     uv run mypy clickup/

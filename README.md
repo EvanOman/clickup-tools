@@ -1,11 +1,10 @@
 # ClickUp Toolkit
 
-A CLI and MCP (Model Context Protocol) interface for ClickUp task management, built with Python.
+A CLI for ClickUp task management, built with Python.
 
 ## Features
 
 - **CLI Interface**: Command-line tool for ClickUp task management
-- **MCP Server**: Interface for AI tool integration
 - **Workspace Discovery**: Navigate ClickUp hierarchy to find IDs
 - **Auth Validation**: Verify API credentials and user info
 - **Shared Core**: Common ClickUp API client and data models
@@ -34,9 +33,6 @@ uv run clickup discover ids
 
 # Create a task (use list ID from discover command)
 uv run clickup task create "My new task" --list-id <discovered-id>
-
-# Start MCP server
-uv run clickup-mcp
 ```
 
 ## Getting Started
@@ -154,9 +150,8 @@ The project uses a modular structure:
 
 - **`clickup/core/`**: Shared ClickUp API client and data models
 - **`clickup/cli/`**: Command-line interface built with Typer
-- **`clickup/mcp/`**: MCP server for AI tool integration
 
-See `PRD.md` for detailed product requirements and `AGENT.md` for development guidelines.
+See `AGENT.md` for development guidelines.
 
 ## License
 
