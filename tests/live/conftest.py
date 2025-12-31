@@ -52,7 +52,7 @@ def live_config(api_key: str) -> Config:
     return config
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 async def live_client(live_config: Config) -> AsyncGenerator[ClickUpClient, None]:
     """Create a ClickUp client with real API credentials."""
     async with ClickUpClient(live_config) as client:
