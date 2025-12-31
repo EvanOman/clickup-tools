@@ -226,7 +226,7 @@ class Config:
                 "Content-Type": "application/json",
             }
 
-        # Fallback to other token methods
+        # Fallback to other token env vars
         access_token = os.getenv("CLICKUP_TOKEN") or os.getenv("CLICKUP_ACCESS_TOKEN")
 
         if access_token:
@@ -235,22 +235,14 @@ class Config:
                 "Content-Type": "application/json",
             }
 
-        # Final fallback to client credentials
-        client_id = self.get_client_id()
-        client_secret = self.get_client_secret()
-
-        if client_id and client_secret:
-            return {
-                "Authorization": client_secret,
-                "Content-Type": "application/json",
-            }
-
-        raise ValueError("ClickUp API token not configured")
+        raise ValueError(
+            "ClickUp API token not configured. "
+            "Set CLICKUP_API_KEY environment variable or use 'clickup config set-token'."
+        )
 
     def has_credentials(self) -> bool:
-        """Check if ClickUp credentials are configured."""
-        # Check for API token first (preferred), then client credentials
-        return bool(self.get_api_token() or (self.get_client_id() and self.get_client_secret()))
+        """Check if ClickUp API token is configured."""
+        return bool(self.get_api_token())
 
     @property
     def config(self) -> ClickUpConfig:
