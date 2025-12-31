@@ -44,10 +44,7 @@ class TestSetupWizard:
     def test_setup_wizard_single_workspace(self, mock_client_class):
         """Test setup wizard with a single workspace auto-selects it."""
         workspace = Team(id="ws1", name="My Workspace", color="#ff0000", members=[])
-        space = Space(
-            id="sp1", name="Engineering", private=False, statuses=[],
-            multiple_assignees=True, features={}
-        )
+        space = Space(id="sp1", name="Engineering", private=False, statuses=[], multiple_assignees=True, features={})
 
         mock_client = _create_mock_client(workspaces=[workspace], spaces=[space])
         mock_client_class.return_value = mock_client
@@ -68,10 +65,7 @@ class TestSetupWizard:
             Team(id="ws1", name="Workspace A", color="#ff0000", members=[]),
             Team(id="ws2", name="Workspace B", color="#00ff00", members=[]),
         ]
-        space = Space(
-            id="sp1", name="Default Space", private=False, statuses=[],
-            multiple_assignees=True, features={}
-        )
+        space = Space(id="sp1", name="Default Space", private=False, statuses=[], multiple_assignees=True, features={})
 
         mock_client = _create_mock_client(workspaces=workspaces, spaces=[space])
         mock_client_class.return_value = mock_client
@@ -136,10 +130,8 @@ class TestSwitchCommands:
     def test_switch_space(self, mock_client_class):
         """Test switch-space command."""
         spaces = [
-            Space(id="sp1", name="Engineering", private=False, statuses=[],
-                  multiple_assignees=True, features={}),
-            Space(id="sp2", name="Marketing", private=False, statuses=[],
-                  multiple_assignees=True, features={}),
+            Space(id="sp1", name="Engineering", private=False, statuses=[], multiple_assignees=True, features={}),
+            Space(id="sp2", name="Marketing", private=False, statuses=[], multiple_assignees=True, features={}),
         ]
 
         mock_client = _create_mock_client(spaces=spaces)
@@ -150,6 +142,7 @@ class TestSwitchCommands:
             with patch.dict("os.environ", env_overrides, clear=False):
                 # First set a workspace
                 from clickup.core import Config
+
                 config = Config(config_path=f"{tmpdir}/.config/clickup-toolkit/config.json")
                 config.set("default_team_id", "team123")
 
@@ -175,6 +168,7 @@ class TestSwitchCommands:
             with patch.dict("os.environ", env_overrides, clear=False):
                 # First set workspace and space
                 from clickup.core import Config
+
                 config = Config(config_path=f"{tmpdir}/.config/clickup-toolkit/config.json")
                 config.set("default_team_id", "team123")
                 config.set("default_space_id", "space123")
@@ -216,6 +210,7 @@ class TestSwitchCommands:
             with patch.dict("os.environ", env_overrides, clear=False):
                 # Set workspace but not space
                 from clickup.core import Config
+
                 config = Config(config_path=f"{tmpdir}/.config/clickup-toolkit/config.json")
                 config.set("default_team_id", "team123")
 
@@ -234,6 +229,7 @@ class TestFriendlyStatusDisplay:
             with patch.dict("os.environ", env_overrides, clear=False):
                 # Configure with friendly names
                 from clickup.core import Config
+
                 config = Config(config_path=f"{tmpdir}/.config/clickup-toolkit/config.json")
                 config.set("default_team_id", "123456")
                 config.set("default_workspace_name", "My Company")

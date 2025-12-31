@@ -45,11 +45,13 @@ def setup_wizard() -> None:
     async def _setup() -> None:
         config = Config()
 
-        console.print(Panel.fit(
-            "[bold]ClickUp CLI Setup Wizard[/bold]\n\n"
-            "This wizard will help you configure your default workspace and space.",
-            border_style="blue"
-        ))
+        console.print(
+            Panel.fit(
+                "[bold]ClickUp CLI Setup Wizard[/bold]\n\n"
+                "This wizard will help you configure your default workspace and space.",
+                border_style="blue",
+            )
+        )
         console.print()
 
         # Check for API token
@@ -94,8 +96,7 @@ def setup_wizard() -> None:
                     console.print(f"Found {len(workspaces)} workspaces:")
                     workspace_options = [(w.id, w.name) for w in workspaces]
                     workspace_id, workspace_name = _prompt_selection(
-                        workspace_options,
-                        f"Select a workspace [1-{len(workspaces)}]"
+                        workspace_options, f"Select a workspace [1-{len(workspaces)}]"
                     )
                     workspace = next(w for w in workspaces if w.id == workspace_id)
                     console.print(f"Using [cyan]{workspace.name}[/cyan] as your default workspace.")
@@ -129,10 +130,7 @@ def setup_wizard() -> None:
                 else:
                     console.print(f"Found {len(spaces)} spaces:")
                     space_options = [(s.id, s.name) for s in spaces]
-                    space_id, space_name = _prompt_selection(
-                        space_options,
-                        f"Select a space [1-{len(spaces)}]"
-                    )
+                    space_id, space_name = _prompt_selection(space_options, f"Select a space [1-{len(spaces)}]")
                     space = next(s for s in spaces if s.id == space_id)
                     console.print(f"Using [cyan]{space.name}[/cyan] as your default space.")
 
@@ -155,12 +153,14 @@ def _print_setup_complete(config: Config) -> None:
     workspace_name = config.get("default_workspace_name") or config.get("default_team_id") or "Not set"
     space_name = config.get("default_space_name") or config.get("default_space_id") or "Not set"
 
-    console.print(Panel.fit(
-        "[bold green]Setup complete![/bold green]\n\n"
-        f"Workspace: [cyan]{workspace_name}[/cyan]\n"
-        f"Space: [cyan]{space_name}[/cyan]\n\n"
-        "You can change these anytime with:\n"
-        "  [dim]clickup config switch-workspace[/dim]\n"
-        "  [dim]clickup config switch-space[/dim]",
-        border_style="green"
-    ))
+    console.print(
+        Panel.fit(
+            "[bold green]Setup complete![/bold green]\n\n"
+            f"Workspace: [cyan]{workspace_name}[/cyan]\n"
+            f"Space: [cyan]{space_name}[/cyan]\n\n"
+            "You can change these anytime with:\n"
+            "  [dim]clickup config switch-workspace[/dim]\n"
+            "  [dim]clickup config switch-space[/dim]",
+            border_style="green",
+        )
+    )

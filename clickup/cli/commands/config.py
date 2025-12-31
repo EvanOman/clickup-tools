@@ -191,10 +191,7 @@ def switch_workspace() -> None:
                     marker = " [green](current)[/green]" if w.id == current_id else ""
                     workspace_options.append((w.id, f"{w.name}{marker}"))
 
-                workspace_id, _ = _prompt_selection(
-                    workspace_options,
-                    f"Select workspace [1-{len(workspaces)}]"
-                )
+                workspace_id, _ = _prompt_selection(workspace_options, f"Select workspace [1-{len(workspaces)}]")
                 workspace = next(w for w in workspaces if w.id == workspace_id)
 
                 config.set("default_team_id", workspace.id)
@@ -247,10 +244,7 @@ def switch_space() -> None:
                     marker = " [green](current)[/green]" if s.id == current_id else ""
                     space_options.append((s.id, f"{s.name}{marker}"))
 
-                space_id, _ = _prompt_selection(
-                    space_options,
-                    f"Select space [1-{len(spaces)}]"
-                )
+                space_id, _ = _prompt_selection(space_options, f"Select space [1-{len(spaces)}]")
                 space = next(s for s in spaces if s.id == space_id)
 
                 config.set("default_space_id", space.id)
@@ -324,10 +318,7 @@ def switch_list() -> None:
                     marker = " [green](current)[/green]" if lst.id == current_id else ""
                     list_options.append((lst.id, f"{lst.name}{marker}"))
 
-                list_id, _ = _prompt_selection(
-                    list_options,
-                    f"Select list [1-{len(all_lists)}]"
-                )
+                list_id, _ = _prompt_selection(list_options, f"Select list [1-{len(all_lists)}]")
                 selected_list = next(lst for lst in all_lists if lst.id == list_id)
 
                 config.set("default_list_id", selected_list.id)
