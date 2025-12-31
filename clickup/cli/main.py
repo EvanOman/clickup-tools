@@ -2,9 +2,9 @@
 
 import asyncio
 
+import typer
 from rich.console import Console
 from rich.table import Table
-import typer
 
 from ..core import ClickUpClient, Config
 from .commands import bulk, config, discover, list as list_cmd, setup, task, templates, workspace
